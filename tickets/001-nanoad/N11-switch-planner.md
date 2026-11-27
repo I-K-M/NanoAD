@@ -1,6 +1,6 @@
 # N11 — switch planner
 
-Status: pending
+Status: experimental implementation; N10 validation and real-host gates pending
 
 Parent: [NAN-001](../../specs/001-nanoad.md), [NAN-002](../../specs/002-resource-research.md), [NAN-003](../../specs/003-module-lifecycle.md)
 
@@ -14,7 +14,7 @@ N10.
 
 ## Allowed boundary
 
-src/planner/; tests/planner/. Changes outside this boundary require a reviewed ticket update.
+src/planner/; tests/planner/. Proposed supporting additions: test import in src/main.zig and docs/DEVELOPMENT-TRACE.md. Independent review remains required. No public mutation CLI.
 
 ## Acceptance criteria
 
