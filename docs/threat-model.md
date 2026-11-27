@@ -11,7 +11,7 @@ The reference operator, signed/verified provider installation and DLLs, OS, excl
 | Threat | Control | Current evidence |
 | --- | --- | --- |
 | Concurrent lab starts | Fixed Global\\NanoAD.ResourceAdmission.v1 Windows mutex, non-blocking; acquire before lab Store, release in reverse | Native test and process harness; not wired to real execution |
-| Bridge/NAT/host-only/foreign peer | Exact internal NIC identity, explicit full peer/route/DNS evidence, no foreign registered VM even stopped | Existing parser plus pure N14 validator; actual full enumeration across provider users/configurations not implemented |
+| Bridge/NAT/host-only/foreign peer | Exact internal NIC identity, explicit full peer/route/DNS evidence, no foreign registered VM even stopped | Typed registered/running queries, bounded parser and pure N14 validator; actual full enumeration across provider users/configurations not implemented |
 | Host exposure through integrations | Require zero shared folders, forwards, USB/controllers/filters, passthrough, serial/parallel, snapshots, other media/attachments; disabled clipboard, drag/drop, remote display | Model checks; missing fields refuse |
 | Wrong VM or VDI, alias/hardlink | Match durable ownership, exact parent, canonical paths, base digest and distinct file IDs; native read-only path observations | Pure tests and Windows path tests; no end-to-end media collector or enforced immutable handle lifetime |
 | Path traversal/device namespace | Bounded conventional fixed-drive paths, reject ADS, dot segments, device names, aliases/reparse points and multi-link files | Lexical and native tests; real NTFS ACLs and reparse experiments remain |

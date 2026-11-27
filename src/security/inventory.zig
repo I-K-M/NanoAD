@@ -4,6 +4,7 @@ const model = @import("../state/model.zig");
 const Digest = @import("../image/digest.zig").Digest;
 const cat = @import("../image/catalogue.zig");
 const path = @import("windows_path.zig");
+const commands = @import("../provider/virtualbox/commands.zig");
 
 pub const max_vms = model.max_guests;
 pub const max_disks = cat.max_disks;
@@ -38,6 +39,16 @@ pub const VmSet = struct {
         return false;
     }
 
+    pub fn validate(self: *const VmSet) Failure!void {
+        if (self.len > max_vms) return error.InventoryLimit;
+        for (self.view(), 0..) |id, i| {
+            if (!id.valid()) return error.InvalidInventory;
+            for (self.entries[0..i]) |prior| {
+                if (id.eql(prior)) return error.DuplicateVM;
+            }
+        }
+    }
+
     pub fn same(a: *const VmSet, b: *const VmSet) bool {
         if (a.len != b.len) return false;
         for (a.view()) |id| if (!b.contains(id)) return false;
@@ -69,6 +80,14 @@ pub fn parseVmList(output: []const u8) Failure!VmSet {
         result.len += 1;
     }
     return result;
+}
+
+// Read-only collection for one provider configuration. Neither query
+// establishes other-account visibility, media ownership or peer isolation.
+pub fn readVmSet(transport: commands.Transport, running_only: bool) !VmSet {
+    var output: [commands.max_output_bytes]u8 = undefined;
+    const request: commands.Request = .{ .operation = if (running_only) .list_running else .list_vms };
+    return parseVmList(try transport.invoke(&request, &output));
 }
 
 pub const VmEvidence = struct {
@@ -166,6 +185,10 @@ pub fn verify(state: *const model.State, snapshot: Snapshot, now: u64) Failure!R
     if (snapshot.vms.len > max_vms or snapshot.disks.len > max_disks or
         snapshot.registered_before.len > max_vms or snapshot.registered_after.len > max_vms or
         snapshot.running_before.len > max_vms or snapshot.running_after.len > max_vms) return error.InventoryLimit;
+    try snapshot.registered_before.validate();
+    try snapshot.registered_after.validate();
+    try snapshot.running_before.validate();
+    try snapshot.running_after.validate();
     if (!snapshot.registered_before.same(&snapshot.registered_after) or
         !snapshot.running_before.same(&snapshot.running_after)) return error.InventoryChanged;
     model.validateInitial(state.initial) catch return error.InvalidInventory;
@@ -177,7 +200,10 @@ pub fn verify(state: *const model.State, snapshot: Snapshot, now: u64) Failure!R
     }
     var expected_count: usize = 0;
     for (state.initial.guests, state.phases) |entry, phase| {
-        const guest = entry orelse continue;
+        const guest = entry orelse {
+            if (phase != .stopped) return error.InvalidInventory;
+            continue;
+        };
         expected_count += 1;
         if (!snapshot.registered_before.contains(guest.owner.vm)) return error.MissingVM;
         const running = switch (phase) {
@@ -386,4 +412,42 @@ test "foreign guest, wrong parent, alias, changed hash and escaped path refuse" 
     f = baseline;
     f.disks[1].relative_path = "../outside.vdi";
     try std.testing.expectError(error.UnsafeDisk, verify(&f.state, f.snapshot(), 1002));
+}
+
+test "duplicate sets cannot mask changed membership" {
+    const f = try Fixture.init();
+    var snapshot = f.snapshot();
+    snapshot.registered_before.entries[1] = snapshot.registered_before.entries[0];
+    snapshot.registered_before.len = 2;
+    snapshot.registered_after = snapshot.registered_before;
+    try std.testing.expectError(error.DuplicateVM, verify(&f.state, snapshot, 1002));
+    snapshot = f.snapshot();
+    snapshot.running_before.entries[0] = model.exampleId("9");
+    snapshot.running_before.len = 1;
+    snapshot.running_after = snapshot.running_before;
+    try std.testing.expectError(error.ForeignVM, verify(&f.state, snapshot, 1002));
+}
+
+const ListFixture = struct {
+    running: bool = false,
+
+    fn invoke(ctx: *anyopaque, request: *const commands.Request, out: []u8, timeout: u32) ids.Failure!usize {
+        const self: *ListFixture = @ptrCast(@alignCast(ctx));
+        if (request.vm != null or timeout != commands.command_timeout_ms) return error.InvalidResponse;
+        const expected: commands.Operation = if (self.running) .list_running else .list_vms;
+        if (request.operation != expected) return error.InvalidResponse;
+        const data = "\"fixture name\" {31234567-89ab-cdef-0123-456789abcdef}\n";
+        if (out.len < data.len) return error.OutputLimit;
+        @memcpy(out[0..data.len], data);
+        return data.len;
+    }
+};
+
+test "typed collection requests contain no VM names or mutation" {
+    var fixture: ListFixture = .{};
+    const transport: commands.Transport = .{ .context = &fixture, .invoke_fn = ListFixture.invoke };
+    const registered = try readVmSet(transport, false);
+    fixture.running = true;
+    const running = try readVmSet(transport, true);
+    try std.testing.expect(registered.same(&running));
 }

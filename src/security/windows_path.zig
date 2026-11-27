@@ -150,7 +150,9 @@ test "lexical Windows escape corpus" {
         "C:relative.vdi",
         "C:\\NanoAD\\x\x00.vdi",
     }) |path| {
-        if (validate(path)) |_| return error.UnsafePathAccepted else |_| {}
+        if (validate(path)) |_| {
+            return error.UnsafePathAccepted;
+        } else |_| {}
     }
 }
 
@@ -164,7 +166,10 @@ test "Windows handle observation rejects a hardlink alias and directories" {
     const file = try tmp.dir.createFile("owned.vdi", .{});
     file.close();
     var root_buffer: [std.fs.max_path_bytes]u8 = undefined;
-    const root = try tmp.dir.realpath(".", &root_buffer);
+    const resolved = try tmp.dir.realpath(".", &root_buffer);
+    // A test-only normalisation of a path obtained from the OS. The public
+    // validator itself continues rejecting device namespace prefixes.
+    const root = if (std.mem.startsWith(u8, resolved, "\\\\?\\")) resolved[4..] else resolved;
     var first_buffer: [max_path]u8 = undefined;
     const first = try std.fmt.bufPrint(&first_buffer, "{s}\\owned.vdi", .{root});
     var second_buffer: [max_path]u8 = undefined;

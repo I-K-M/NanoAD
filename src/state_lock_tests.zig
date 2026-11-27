@@ -60,9 +60,6 @@ pub fn main() !void {
     defer std.fs.cwd().deleteTree(&name) catch {};
     var dir = try std.fs.cwd().openDir(&name, .{});
     defer dir.close();
-    var lock = try Lock.create(dir);
-    var held = true;
-    defer if (held) lock.close();
     var path_buffer: [std.fs.max_path_bytes]u8 = undefined;
     const executable = try std.fs.selfExePath(&path_buffer);
     if (builtin.os.tag == .windows and builtin.cpu.arch == .x86_64) {
@@ -72,6 +69,9 @@ pub fn main() !void {
         try global.release();
         try runChild(executable, "try-host-lock", "different-lab-root", 0);
     }
+    var lock = try Lock.create(dir);
+    var held = true;
+    defer if (held) lock.close();
     try runChild(executable, "try-lock", &name, 17);
     lock.close();
     held = false;
