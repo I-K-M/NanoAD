@@ -89,4 +89,5 @@ test {
     _ = @import("state/journal.zig");
     _ = @import("lifecycle/transaction/reconcile.zig");
     _ = @import("lifecycle/transaction/coordinator.zig");
+    _ = @import("planner/switch.zig");
 }

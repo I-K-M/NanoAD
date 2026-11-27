@@ -55,6 +55,10 @@ Initial CI stopped at the formatter; [diagnostic CI](https://github.com/I-K-M/Na
 
 The first bundled registry uses a closed JSON schema, an explicit build-time manifest allowlist, fixed-size parsing and graph structures, checked integer/null resource fields, canonical identifiers and deterministic dependency/conflict resolution. Only ad-core is selected by default. All activation paths are unavailable; read-only modules list/info report planned versus experimental-script implementations and do not inspect lab state. CI checks the registry and CLI working-directory invariance. See [module contract](../tests/modules/README.md) and [proof pack](../tests/modules/PROOF.md). N09 qualification and independent review remain gates; metadata introduces no VM, network or host changes.
 
+## N11 NanoPlanner
+
+The pure switch planner takes a trusted revisioned inventory and bundled dependency graph; protects core, pins and retained dependencies; computes reverse-order stops and dependency-first starts; searches bounded combinations and offers choices even when keeping modules fits. It checks conservative memory/commit/disk envelopes at each step, never credits projected host release or disk reclamation, and binds the exact plan and input facts to a canonical SHA-256 fingerprint. See [planner contract](../tests/planner/README.md) and [proof pack](../tests/planner/PROOF.md). N10 CI and real module inventory/admission/approval integration remain gates. No provider mutation or public execution command.
+
 ## Qualification status
 
 N01–N04 remain open as research gates despite code integration. N05 hosted CI passed; real host and resource evidence remain pending. Do not label any Windows profile qualified. No production deployment or paid resources. Revert scoped commits if needed; do not automatically reset or delete a guest.
