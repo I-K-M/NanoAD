@@ -21,6 +21,15 @@ pub fn build(b: *std.Build) void {
     const run_tests = b.addRunArtifact(unit_tests);
     const test_step = b.step("test", "Run NanoAD unit tests");
     test_step.dependOn(&run_tests.step);
+    const provider_tests = b.addTest(.{
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/provider_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const run_provider_tests = b.addRunArtifact(provider_tests);
+    test_step.dependOn(&run_provider_tests.step);
 }
 
 fn module(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
