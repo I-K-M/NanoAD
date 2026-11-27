@@ -59,7 +59,7 @@ pub fn info(output: []const u8, owned: types.OwnedGuest) types.Failure!types.Obs
     while (lines.next()) |raw| {
         line_count += 1;
         if (line_count > 4096 or raw.len > 8192) return error.InvalidResponse;
-        const line = std.mem.trimEnd(u8, raw, "\r");
+        const line = if (raw.len > 0 and raw[raw.len - 1] == '\r') raw[0 .. raw.len - 1] else raw;
         if (line.len == 0) continue;
         for (line) |c| if (c < 32) return error.InvalidResponse;
         const separator = std.mem.indexOfScalar(u8, line, '=') orelse return error.InvalidResponse;
@@ -199,4 +199,11 @@ test "bridged and NAT network fixtures cannot become compatible" {
     const nat = try info(prefix ++ "nic1=\"intnet\"\nnic2=\"nat\"\n", exampleOwned());
     try std.testing.expectEqual(types.NetworkEvidence.rejected, bridge.network);
     try std.testing.expectEqual(types.NetworkEvidence.rejected, nat.network);
+}
+
+test "Windows CRLF provider output" {
+    const crlf = "UUID=\"" ++ vm ++ "\"\r\nVMState=\"poweroff\"\r\nmemory=2048\r\n";
+    const observed = try info(crlf, exampleOwned());
+    try std.testing.expectEqual(types.PowerState.powered_off, observed.power);
+    try std.testing.expectEqual(types.NetworkEvidence.incomplete, observed.network);
 }

@@ -21,7 +21,7 @@ Added bounded host/guest memory and CPU sampling, JSONL summary, conservative NT
 
 ## N06a provider contract
 
-[PR #7](https://github.com/I-K-M/NanoAD/pull/7) prepares a Zig-only provider protocol and lifecycle contract, with fixed-size identities, bounded response parsing, typed requests, explicit authorisation and fake-backend tests. Static review hardened UUID validation at the encoding boundary and added bridged/NAT rejection tests. CLI integration is deliberately absent until a bounded native transport, N08 admission, N09 durable state/ownership and independent isolation/readiness checks exist. Hosted tests do not exercise a real VM. See [provider verification](../tests/provider/README.md). The trace and build/test wiring are supporting additions outside the original N06 boundary.
+[PR #7](https://github.com/I-K-M/NanoAD/pull/7) prepares a Zig-only provider protocol and lifecycle contract, with fixed-size identities, bounded response parsing, typed requests, explicit authorisation and fake-backend tests. Static review hardened UUID validation at the encoding boundary and added bridged/NAT rejection tests. CLI integration is deliberately absent until a bounded native transport, N08 admission, N09 durable state/ownership and independent isolation/readiness checks exist. [Initial CI](https://github.com/I-K-M/NanoAD/actions/runs/46049998085) found an unavailable std.mem.trimEnd API on pinned Zig 0.14.1; replaced with explicit bounded CRLF handling and added a regression test. Hosted tests do not exercise a real VM. See [provider verification](../tests/provider/README.md). The trace and build/test wiring are supporting additions outside the original N06 boundary.
 
 ## Qualification status
 
