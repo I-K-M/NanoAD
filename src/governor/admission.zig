@@ -125,6 +125,13 @@ pub const Ledger = struct {
     }
 };
 
+// Read-only admission of an already constructed ledger. Used to check
+// stop/start transitional and post-step envelopes without reserving twice.
+pub fn checkCurrent(ledger: *const Ledger, snapshot: Snapshot, budget: Budget, now_ms: u64) Failure!Plan {
+    try ledger.validate();
+    return evaluate(ledger, snapshot, budget, null, now_ms);
+}
+
 pub fn preview(ledger: *const Ledger, snapshot: Snapshot, budget: Budget, request: Request, now_ms: u64) Failure!Plan {
     try ledger.validate();
     if (ledger.len == max_workloads) return error.Capacity;

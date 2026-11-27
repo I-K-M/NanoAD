@@ -1,6 +1,6 @@
 # N12 — switch executor
 
-Status: pending
+Status: experimental session executor; N11 validation and native execution gates pending
 
 Parent: [NAN-001](../../specs/001-nanoad.md), [NAN-002](../../specs/002-resource-research.md), [NAN-003](../../specs/003-module-lifecycle.md)
 
@@ -14,7 +14,7 @@ N11.
 
 ## Allowed boundary
 
-src/lifecycle/switch/; src/cli/commands/; tests/switch/. Changes outside this boundary require a reviewed ticket update.
+src/lifecycle/switch/; src/cli/commands/; tests/switch/. Proposed supporting additions: a read-only checkCurrent wrapper in src/governor/admission.zig, test import in src/main.zig and docs/DEVELOPMENT-TRACE.md. No public mutation command. Independent review remains required.
 
 ## Acceptance criteria
 

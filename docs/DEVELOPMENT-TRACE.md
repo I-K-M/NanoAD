@@ -51,13 +51,19 @@ The first durable state slice uses a bounded, append-only, hash-chained JSON eve
 
 ## N10 module registry
 
-Initial CI stopped at the formatter; [diagnostic CI](https://github.com/I-K-M/NanoAD/actions/runs/46058476177) printed the exact filename-slice spacing difference. Applied the formatter's change. Compilation and functional validation remain pending.
+Initial CI stopped at the formatter; [diagnostic CI](https://github.com/I-K-M/NanoAD/actions/runs/46058476177) printed the exact filename-slice spacing difference. Applied the formatter's change. [Final N10 CI](https://github.com/I-K-M/NanoAD/actions/runs/46058736502) passed on Windows and Linux. [PR #12](https://github.com/I-K-M/NanoAD/pull/12) merged at 02f952d2732b3325bdef7d6893cb6e202406212d.
 
 The first bundled registry uses a closed JSON schema, an explicit build-time manifest allowlist, fixed-size parsing and graph structures, checked integer/null resource fields, canonical identifiers and deterministic dependency/conflict resolution. Only ad-core is selected by default. All activation paths are unavailable; read-only modules list/info report planned versus experimental-script implementations and do not inspect lab state. CI checks the registry and CLI working-directory invariance. See [module contract](../tests/modules/README.md) and [proof pack](../tests/modules/PROOF.md). N09 qualification and independent review remain gates; metadata introduces no VM, network or host changes.
 
 ## N11 NanoPlanner
 
-The pure switch planner takes a trusted revisioned inventory and bundled dependency graph; protects core, pins and retained dependencies; computes reverse-order stops and dependency-first starts; searches bounded combinations and offers choices even when keeping modules fits. It checks conservative memory/commit/disk envelopes at each step, never credits projected host release or disk reclamation, and binds the exact plan and input facts to a canonical SHA-256 fingerprint. See [planner contract](../tests/planner/README.md) and [proof pack](../tests/planner/PROOF.md). N10 CI and real module inventory/admission/approval integration remain gates. No provider mutation or public execution command.
+[PR #13](https://github.com/I-K-M/NanoAD/pull/13) merged at f7ace83407bd0c18e734e3b5cd58f30b615ec75a following [required Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46059017849).
+
+The pure switch planner takes a trusted revisioned inventory and bundled dependency graph; protects core, pins and retained dependencies; computes reverse-order stops and dependency-first starts; searches bounded combinations and offers choices even when keeping modules fits. It checks conservative memory/commit/disk envelopes at each step, never credits projected host release or disk reclamation, and binds the exact plan and input facts to a canonical SHA-256 fingerprint. See [planner contract](../tests/planner/README.md) and [proof pack](../tests/planner/PROOF.md). Real module inventory/admission/approval integration remains a gate. No provider mutation or public execution command.
+
+## N12 NanoSwitch
+
+Internal session executor recomputes an exact approved plan, validates all owned guest identities, costs and fresh evidence, rechecks each transitional/after-step envelope through NanoRAM/NanoDisk and uses N09 synced intent/dispatch/completion. Default refusal, read-only preview, one provider call per step, no automatic retry or compensation. Failure preserves earlier committed steps and ambiguous reservations; a fresh plan and consent are required after interruption. Full session progress/hash is not durable beyond individual N09 events. See [switch contract](../tests/switch/README.md) and [proof pack](../tests/switch/PROOF.md). Native execution, host-wide lock, complete attestation and independent review remain pending.
 
 ## Qualification status
 
