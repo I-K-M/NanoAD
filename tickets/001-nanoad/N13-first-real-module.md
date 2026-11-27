@@ -1,6 +1,6 @@
 # N13 — first real module
 
-Status: pending
+Status: experimental native scripts; real qualification pending
 
 Parent: [NAN-001](../../specs/001-nanoad.md), [NAN-002](../../specs/002-resource-research.md), [NAN-003](../../specs/003-module-lifecycle.md)
 
@@ -14,7 +14,7 @@ N12.
 
 ## Allowed boundary
 
-modules/directory-fixtures/; modules/member-server/; provisioning/windows/member/; tests/integration/modules/. Changes outside this boundary require a reviewed ticket update.
+modules/directory-fixtures/; modules/member-server/; provisioning/windows/member/; tests/integration/modules/. Proposed supporting additions: member availability and its regression assertion in src/modules/manifest.zig and registry.zig, dedicated syntax/evidence CI workflow, docs/DEVELOPMENT-TRACE.md. Independent review required. No real provider mutation or activation CLI.
 
 ## Acceptance criteria
 
