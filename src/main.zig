@@ -56,4 +56,9 @@ test {
     _ = cli;
     _ = host;
     _ = @import("host/meminfo.zig");
+    _ = @import("image/digest.zig");
+    _ = @import("image/catalogue.zig");
+    _ = @import("storage/accounting.zig");
+    _ = @import("storage/planner.zig");
+    _ = @import("storage/windows_allocation.zig");
 }
