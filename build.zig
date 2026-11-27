@@ -8,7 +8,7 @@ comptime {
 
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseSafe });
+    const optimize = b.option(std.builtin.OptimizeMode, "optimize", "Optimisation mode") orelse .ReleaseSafe;
     const exe = b.addExecutable(.{
         .name = "nanoad",
         .root_module = module(b, target, optimize),
