@@ -75,6 +75,8 @@ Native member-server provisioning scripts and read-only health checks target one
 
 ## N14 isolation and safety
 
+[CI 46060788944](https://github.com/I-K-M/NanoAD/actions/runs/46060788944) passed Linux and Windows unit/process-lock tests but failed the separate native transport fixture with Unsupported. Stage the test artifact under the local user directory and identify the failing stage without weakening the native fixed-drive guard. Revalidation required.
+
 Added strict normalised inventory policy (model compatibility only), read-only registered/running VM commands, Windows machine-wide cooperative mutex, handle-based fixed-drive path observation, bounded refusal codes, threat model and recovery policy. [Security contract](../tests/security/README.md) and [proof pack](../tests/security/PROOF.md) record the native/fake tests and limitations. Full provider-account/peer/media collection, guest network evidence, real host lock integration, trusted ACLs and independent review remain gates. Native mutation transport remains disabled.
 
 ## Qualification status
