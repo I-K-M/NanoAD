@@ -92,6 +92,8 @@ pub const Alternatives = struct {
     options: [max_alternatives]Plan = undefined,
     len: usize = 0,
     feasible_count: usize = 0,
+    rejected_count: usize = 0,
+    first_rejection: ?Failure = null,
     search_limited: bool = false,
     // Independent of ranking by fewer interruptions: most economical
     // verified-in-model final memory envelope, not measured host release.
@@ -142,8 +144,9 @@ fn fresh(started: u64, completed: u64, now: u64, age: u64) Failure!void {
 fn validateSnapshot(input: Input, now: u64) Failure!void {
     const s = input.snapshot;
     const b = input.budget;
+    const zero_digest: [32]u8 = @splat(0);
     if (!input.lab.valid() or input.revision == 0 or
-        std.mem.allEqual(u8, &input.inventory_digest, 0)) return error.InvalidInventory;
+        std.mem.eql(u8, &input.inventory_digest, &zero_digest)) return error.InvalidInventory;
     if (s.inventory_revision != input.revision) return error.StaleInventory;
     if (!s.provider_reconciled or !s.disk_volume_verified) return error.UnreconciledInventory;
     if (!s.host_scope_verified) return error.UnqualifiedHost;
@@ -174,12 +177,14 @@ fn prepare(registry: *const catalogue.Registry, input: Input, target: manifest.I
     if (registry.len == 0 or registry.len > max_modules or input.entries.len != registry.len)
         return error.InvalidInventory;
     if (input.pinned & ~allMask(registry.len) != 0) return error.InvalidInventory;
+    if (target.len == 0 or target.len > target.bytes.len) return error.InvalidId;
+    _ = try manifest.Id.parse(target.slice());
     const selected = registry.index(target) orelse return error.UnknownModule;
     const core = registry.index(try manifest.Id.parse("ad-core")) orelse return error.InvalidInventory;
     var active: u32 = 0;
     var nonstoppable: u32 = 0;
     for (input.entries, registry.view(), 0..) |entry, m, i| {
-        if (!entry.id.eql(m.id)) return error.InvalidInventory;
+        if (entry.id.len == 0 or entry.id.len > entry.id.bytes.len or !entry.id.eql(m.id)) return error.InvalidInventory;
         switch (entry.status) {
             .unknown, .pending, .stopping => return error.RecoveryRequired,
             .running, .stopped => {
@@ -525,7 +530,11 @@ pub fn alternatives(registry: *const catalogue.Registry, input: Input, target: m
     // Only model-feasible alternatives enter the ranked result.
     var subset = context.eligible;
     while (subset != 0) : (subset = (subset - 1) & context.eligible) {
-        var plan = simulate(registry, input, context, subset) catch continue;
+        var plan = simulate(registry, input, context, subset) catch |err| {
+            result.rejected_count += 1;
+            if (result.first_rejection == null) result.first_rejection = err;
+            continue;
+        };
         result.feasible_count += 1;
         plan.fingerprint = fingerprint(registry, input, &plan);
         if (result.lowest_footprint == null or footprintLess(plan, result.lowest_footprint.?))
@@ -701,4 +710,60 @@ test "no projected host release, disk retention or startup peak bypass" {
     input = f.input();
     f.entries[f.index("linux-tools")].cost.?.startup_extra = bounds.BoundPair.upper(2 * gib, 2 * gib);
     try std.testing.expectError(error.LabPhysicalLimit, selectedPlan(&f.registry, input, target, stops, test_now));
+}
+
+test "dependent stops precede prerequisites and pins protect both" {
+    var f = try Fixture.init();
+    f.guest("ad-core", .running, 1024, 128);
+    f.guest("member-server", .running, 256, 64);
+    f.guest("second-dc", .running, 256, 64);
+    f.guest("linux-tools", .stopped, 512, 128);
+    const member = f.index("member-server");
+    const secondary = f.index("second-dc");
+    // Synthetic valid graph extension: second-dc depends on member-server.
+    f.registry.direct[secondary] |= bit(member);
+    f.registry.closure[secondary] |= bit(member);
+    const target = try manifest.Id.parse("linux-tools");
+    try std.testing.expectError(error.DependencyConflict, selectedPlan(&f.registry, f.input(), target, bit(member), test_now));
+    const plan = try selectedPlan(&f.registry, f.input(), target, bit(member) | bit(secondary), test_now);
+    try std.testing.expectEqual(@as(u8, @intCast(secondary)), plan.steps[0].index);
+    try std.testing.expectEqual(@as(u8, @intCast(member)), plan.steps[1].index);
+    var pinned = f.input();
+    pinned.pinned = bit(secondary);
+    const result = try alternatives(&f.registry, pinned, target, test_now);
+    try std.testing.expect(!result.choice_required);
+    try std.testing.expectEqual(@as(u32, 0), result.eligible);
+}
+
+test "conflicting active guest must be explicitly selected to stop" {
+    var f = try Fixture.init();
+    f.guest("ad-core", .running, 1024, 128);
+    f.guest("member-server", .running, 512, 128);
+    f.guest("linux-tools", .stopped, 512, 128);
+    const member = f.index("member-server");
+    const tools = f.index("linux-tools");
+    f.registry.conflicts[member] |= bit(tools);
+    f.registry.conflicts[tools] |= bit(member);
+    const target = try manifest.Id.parse("linux-tools");
+    const result = try alternatives(&f.registry, f.input(), target, test_now);
+    try std.testing.expectEqual(error.DependencyConflict, result.keep_error.?);
+    try std.testing.expect(result.choice_required);
+    try std.testing.expectEqual(@as(usize, 1), result.feasible_count);
+    try std.testing.expectEqual(bit(member), result.options[0].stop_mask);
+    f.entries[tools].cost.?.startup_extra.physical = .{ .estimate = 128 * mib };
+    const unknown = try alternatives(&f.registry, f.input(), target, test_now);
+    try std.testing.expectEqual(@as(usize, 0), unknown.feasible_count);
+    try std.testing.expectEqual(error.UnknownMemory, unknown.first_rejection.?);
+}
+
+test "invalid identity lengths fail closed" {
+    var f = try Fixture.init();
+    f.guest("ad-core", .running, 1024, 128);
+    f.guest("linux-tools", .stopped, 512, 128);
+    var target = try manifest.Id.parse("linux-tools");
+    target.len = 255;
+    try std.testing.expectError(error.InvalidId, selectedPlan(&f.registry, f.input(), target, 0, test_now));
+    target = try manifest.Id.parse("linux-tools");
+    f.entries[f.index("linux-tools")].id.len = 255;
+    try std.testing.expectError(error.InvalidInventory, selectedPlan(&f.registry, f.input(), target, 0, test_now));
 }

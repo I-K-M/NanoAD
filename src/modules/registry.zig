@@ -43,7 +43,7 @@ pub const Registry = struct {
         const value = try manifest.parse(source.json);
         const name = source.filename;
         if (name.len != @as(usize, value.id.len) + 5 or !std.mem.endsWith(u8, name, ".json") or
-            !std.mem.eql(u8, name[0..name.len - 5], value.id.slice())) return error.InvalidFilename;
+            !std.mem.eql(u8, name[0 .. name.len - 5], value.id.slice())) return error.InvalidFilename;
         if (self.index(value.id) != null) return error.DuplicateModule;
         self.entries[self.len] = value;
         self.len += 1;

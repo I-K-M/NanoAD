@@ -51,6 +51,8 @@ The first durable state slice uses a bounded, append-only, hash-chained JSON eve
 
 ## N10 module registry
 
+Initial CI stopped at the formatter; [diagnostic CI](https://github.com/I-K-M/NanoAD/actions/runs/46058476177) printed the exact filename-slice spacing difference. Applied the formatter's change. Compilation and functional validation remain pending.
+
 The first bundled registry uses a closed JSON schema, an explicit build-time manifest allowlist, fixed-size parsing and graph structures, checked integer/null resource fields, canonical identifiers and deterministic dependency/conflict resolution. Only ad-core is selected by default. All activation paths are unavailable; read-only modules list/info report planned versus experimental-script implementations and do not inspect lab state. CI checks the registry and CLI working-directory invariance. See [module contract](../tests/modules/README.md) and [proof pack](../tests/modules/PROOF.md). N09 qualification and independent review remain gates; metadata introduces no VM, network or host changes.
 
 ## N11 NanoPlanner
