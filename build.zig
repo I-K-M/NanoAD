@@ -39,6 +39,7 @@ pub fn build(b: *std.Build) void {
             .optimize = optimize,
         }),
     });
+    if (target.result.os.tag == .windows) lock_harness.root_module.linkSystemLibrary("kernel32", .{});
     const run_lock_harness = b.addRunArtifact(lock_harness);
     test_step.dependOn(&run_lock_harness.step);
 
