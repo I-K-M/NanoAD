@@ -178,6 +178,12 @@ fn evaluate(ledger: *const Ledger, snapshot: Snapshot, budget: Budget, request: 
     if (total == 0 or available > total or commit_limit == 0 or committed > commit_limit or
         disk_total == 0 or disk_available > disk_total) return error.InvalidHostSample;
     if (snapshot.credits.len > ledger.len) return error.InvalidCredit;
+    // A strict inventory cannot contain estimates, unknowns or contradictory totals.
+    if (snapshot.disk_totals.estimates != 0 or snapshot.disk_totals.unknown != 0)
+        return error.UnknownAllocation;
+    if (snapshot.disk_totals.strict_upper_bound) |upper| {
+        if (upper < snapshot.disk_totals.reported_bytes) return error.InvalidBound;
+    }
 
     // Shared provider/services/controller peak is charged once. There is no
     // automatic credit for an existing shared process or any memory cache.
@@ -235,7 +241,7 @@ fn evaluate(ledger: *const Ledger, snapshot: Snapshot, budget: Budget, request: 
     };
 }
 
-fn id(comptime prefix: []const u8) ids.Uuid {
+fn fixtureId(comptime prefix: []const u8) ids.Uuid {
     return ids.Uuid.parse(prefix ++ "1234567-89ab-cdef-0123-456789abcdef") catch unreachable;
 }
 
@@ -280,7 +286,7 @@ fn fixtureSnapshot(revision: u64) Snapshot {
 
 test "peak includes configured RAM, provider overhead and shared costs" {
     const ledger = try Ledger.init(1, &.{});
-    const plan = try preview(&ledger, fixtureSnapshot(1), fixtureBudget(), .{ .id = id("1"), .cost = fixtureCost(1536, 256) }, 1002);
+    const plan = try preview(&ledger, fixtureSnapshot(1), fixtureBudget(), .{ .id = fixtureId("1"), .cost = fixtureCost(1536, 256) }, 1002);
     try std.testing.expectEqual(@as(u64, 2048 * mib), plan.lab_peak.physical);
     try std.testing.expectEqual(@as(u64, 2048 * mib), plan.lab_peak.commit);
     try std.testing.expectEqual(@as(u64, 3 * gib), plan.projected_host_available.physical);
@@ -291,8 +297,8 @@ test "peak includes configured RAM, provider overhead and shared costs" {
 
 test "concurrent stale starts refused and pending reservations charged" {
     var ledger = try Ledger.init(1, &.{});
-    const first: Request = .{ .id = id("1"), .cost = fixtureCost(1536, 256) };
-    const second: Request = .{ .id = id("2"), .cost = fixtureCost(1024, 128) };
+    const first: Request = .{ .id = fixtureId("1"), .cost = fixtureCost(1536, 256) };
+    const second: Request = .{ .id = fixtureId("2"), .cost = fixtureCost(1024, 128) };
     const snapshot = fixtureSnapshot(1);
     _ = try preview(&ledger, snapshot, fixtureBudget(), first, 1002);
     _ = try preview(&ledger, snapshot, fixtureBudget(), second, 1002);
@@ -313,7 +319,7 @@ test "concurrent stale starts refused and pending reservations charged" {
 
 test "host drift between reservation and launch fails recheck" {
     var ledger = try Ledger.init(1, &.{});
-    const request: Request = .{ .id = id("1"), .cost = fixtureCost(1536, 256) };
+    const request: Request = .{ .id = fixtureId("1"), .cost = fixtureCost(1536, 256) };
     _ = try ledger.reserve(fixtureSnapshot(1), fixtureBudget(), request, 1002);
     var changed = fixtureSnapshot(2);
     changed.memory.physical_available = 3 * gib;
@@ -330,7 +336,7 @@ test "host drift between reservation and launch fails recheck" {
 
 test "unknown, estimate-only, stale and unqualified evidence rejected" {
     const ledger = try Ledger.init(1, &.{});
-    var request: Request = .{ .id = id("1"), .cost = fixtureCost(1536, 256) };
+    var request: Request = .{ .id = fixtureId("1"), .cost = fixtureCost(1536, 256) };
     request.cost.steady_overhead.commit = .unknown;
     try std.testing.expectError(error.UnknownMemory, preview(&ledger, fixtureSnapshot(1), fixtureBudget(), request, 1002));
     request.cost = fixtureCost(1536, 256);
@@ -356,9 +362,9 @@ test "unknown, estimate-only, stale and unqualified evidence rejected" {
 }
 
 test "running credits are optional, unique, fresh and never reduce lab envelope" {
-    const existing = [_]Entry{.{ .id = id("1"), .phase = .active, .cost = fixtureCost(1024, 256) }};
+    const existing = [_]Entry{.{ .id = fixtureId("1"), .phase = .active, .cost = fixtureCost(1024, 256) }};
     const ledger = try Ledger.init(1, &existing);
-    const request: Request = .{ .id = id("2"), .cost = fixtureCost(1024, 128) };
+    const request: Request = .{ .id = fixtureId("2"), .cost = fixtureCost(1024, 128) };
     var snapshot = fixtureSnapshot(1);
     snapshot.memory.physical_available = 4 * gib;
     try std.testing.expectError(error.HostPhysicalReserve, preview(&ledger, snapshot, fixtureBudget(), request, 1002));
@@ -386,7 +392,7 @@ test "running credits are optional, unique, fresh and never reduce lab envelope"
 
 test "independent commit and disk limits; no paging or speculative reclamation" {
     const ledger = try Ledger.init(1, &.{});
-    var request: Request = .{ .id = id("1"), .cost = fixtureCost(1536, 256) };
+    var request: Request = .{ .id = fixtureId("1"), .cost = fixtureCost(1536, 256) };
     request.cost.startup_extra.commit = .{ .upper_bound = 2 * gib };
     try std.testing.expectError(error.LabCommitLimit, preview(&ledger, fixtureSnapshot(1), fixtureBudget(), request, 1002));
     request.cost = fixtureCost(1536, 256);
@@ -401,4 +407,39 @@ test "independent commit and disk limits; no paging or speculative reclamation" 
     try std.testing.expectError(error.InvalidBudget, preview(&ledger, fixtureSnapshot(1), budget, request, 1002));
     request.cost.guest = .{ .upper_bound = std.math.maxInt(u64) };
     try std.testing.expectError(error.Overflow, preview(&ledger, fixtureSnapshot(1), fixtureBudget(), request, 1002));
+}
+
+test "exact limits pass and one-byte shortfalls refuse" {
+    const ledger = try Ledger.init(1, &.{});
+    const request: Request = .{ .id = fixtureId("1"), .cost = fixtureCost(1536, 256) };
+    var budget = fixtureBudget();
+    budget.lab_memory_limit = 2048 * mib;
+    budget.installed_disk_limit = 16 * gib + 256 * mib;
+    budget.operation_disk_peak_limit = 16 * gib + 384 * mib;
+    var snapshot = fixtureSnapshot(1);
+    snapshot.memory.physical_available = 4 * gib;
+    snapshot.memory.committed = 10 * gib - (2048 + 512) * mib;
+    snapshot.disk.available_to_caller = (384 + 512) * mib;
+    _ = try preview(&ledger, snapshot, budget, request, 3000);
+    snapshot.memory.physical_available.? -= 1;
+    try std.testing.expectError(error.HostPhysicalReserve, preview(&ledger, snapshot, budget, request, 3000));
+    snapshot.memory.physical_available.? += 1;
+    snapshot.memory.committed.? += 1;
+    try std.testing.expectError(error.HostCommitReserve, preview(&ledger, snapshot, budget, request, 3000));
+    snapshot.memory.committed.? -= 1;
+    snapshot.disk.available_to_caller.? -= 1;
+    try std.testing.expectError(error.HostFreeSpace, preview(&ledger, snapshot, budget, request, 3000));
+}
+
+test "duplicate and malformed reservations cannot mutate ledger" {
+    const existing = [_]Entry{.{ .id = fixtureId("1"), .phase = .pending, .cost = fixtureCost(1024, 128) }};
+    try std.testing.expectError(error.DuplicateWorkload, Ledger.init(1, &.{ existing[0], existing[0] }));
+    var ledger = try Ledger.init(1, &existing);
+    const request: Request = .{ .id = existing[0].id, .cost = fixtureCost(512, 128) };
+    try std.testing.expectError(error.DuplicateWorkload, ledger.reserve(fixtureSnapshot(1), fixtureBudget(), request, 1002));
+    var invalid = request;
+    invalid.id.text[0] = '/';
+    try std.testing.expectError(error.InvalidIdentity, ledger.reserve(fixtureSnapshot(1), fixtureBudget(), invalid, 1002));
+    try std.testing.expectEqual(@as(usize, 1), ledger.len);
+    try std.testing.expectEqual(@as(u64, 1), ledger.revision);
 }
