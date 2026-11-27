@@ -79,6 +79,10 @@ Native member-server provisioning scripts and read-only health checks target one
 
 Added strict normalised inventory policy (model compatibility only), read-only registered/running VM commands, Windows machine-wide cooperative mutex, handle-based fixed-drive path observation, bounded refusal codes, threat model and recovery policy. [Security contract](../tests/security/README.md) and [proof pack](../tests/security/PROOF.md) record the native/fake tests and limitations. Full provider-account/peer/media collection, guest network evidence, real host lock integration, trusted ACLs and independent review remain gates. Native mutation transport remains disabled.
 
+## N15 independent qualification preparation
+
+Static integration audit Q01–Q11, compatibility matrix, AC-01–AC-11 evidence map, blank sanitised report template and offline comparison/checker for reference, candidate and independent replication. The checker always reports qualification not_established; synthetic data and hosted CI cannot prove a real host or second operator. See [qualification procedure](../tests/integration/qualification/README.md), [audit](../tests/integration/qualification/AUDIT.md) and [proof pack](../tests/integration/qualification/PROOF.md). N14 validation, native execution/measurement, resource envelopes, independent review and N16 approval remain gates.
+
 ## Qualification status
 
 N01–N04 remain open as research gates despite code integration. N05 hosted CI passed; real host and resource evidence remain pending. Do not label any Windows profile qualified. No production deployment or paid resources. Revert scoped commits if needed; do not automatically reset or delete a guest.

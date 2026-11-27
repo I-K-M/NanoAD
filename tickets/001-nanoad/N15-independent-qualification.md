@@ -1,6 +1,6 @@
 # N15 — independent qualification
 
-Status: pending
+Status: evidence preparation; blocked on native integration and independent reproduction
 
 Parent: [NAN-001](../../specs/001-nanoad.md), [NAN-002](../../specs/002-resource-research.md), [NAN-003](../../specs/003-module-lifecycle.md)
 
@@ -14,7 +14,7 @@ N13, N14.
 
 ## Allowed boundary
 
-benchmarks/results/; docs/COMPATIBILITY.md; tests/integration/. Changes outside this boundary require a reviewed ticket update.
+benchmarks/results/; docs/COMPATIBILITY.md; tests/integration/. Proposed supporting additions: dedicated synthetic evidence workflow, this ticket status and development trace. Independent review required. No provider mutation enablement or real-host action in this preparation slice.
 
 ## Acceptance criteria
 
