@@ -94,8 +94,8 @@ function Invoke-Provider {
 }
 
 # Record intent before every side effect. No arbitrary provider commands are accepted.
-$plan.vm_uuid = $id
-$plan.vm_name = $name
+$plan['vm_uuid'] = $id
+$plan['vm_name'] = $name
 $plan | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $dir 'plan.json') -Encoding UTF8
 try {
     Invoke-Provider 'create_vm' @('createvm','--name',$name,'--ostype','Windows2022_64','--basefolder',$dir,'--uuid',$id,'--register')
