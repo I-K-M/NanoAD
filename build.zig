@@ -30,6 +30,30 @@ pub fn build(b: *std.Build) void {
     });
     const run_provider_tests = b.addRunArtifact(provider_tests);
     test_step.dependOn(&run_provider_tests.step);
+
+    if (target.result.os.tag == .windows and target.result.cpu.arch == .x86_64) {
+        const child = b.addExecutable(.{
+            .name = "VBoxManage",
+            .root_module = b.createModule(.{
+                .root_source_file = b.path("src/provider/virtualbox/test_child.zig"),
+                .target = target,
+                .optimize = optimize,
+            }),
+        });
+        const harness_module = b.createModule(.{
+            .root_source_file = b.path("src/native_transport_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        });
+        harness_module.linkSystemLibrary("kernel32", .{});
+        const harness = b.addExecutable(.{
+            .name = "native-transport-tests",
+            .root_module = harness_module,
+        });
+        const run_harness = b.addRunArtifact(harness);
+        run_harness.addArtifactArg(child);
+        test_step.dependOn(&run_harness.step);
+    }
 }
 
 fn module(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin.OptimizeMode) *std.Build.Module {
