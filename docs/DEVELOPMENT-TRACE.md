@@ -57,6 +57,8 @@ The first bundled registry uses a closed JSON schema, an explicit build-time man
 
 ## N11 NanoPlanner
 
+[PR #13](https://github.com/I-K-M/NanoAD/pull/13) merged at f7ace83407bd0c18e734e3b5cd58f30b615ec75a following [required Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46059017849).
+
 The pure switch planner takes a trusted revisioned inventory and bundled dependency graph; protects core, pins and retained dependencies; computes reverse-order stops and dependency-first starts; searches bounded combinations and offers choices even when keeping modules fits. It checks conservative memory/commit/disk envelopes at each step, never credits projected host release or disk reclamation, and binds the exact plan and input facts to a canonical SHA-256 fingerprint. See [planner contract](../tests/planner/README.md) and [proof pack](../tests/planner/PROOF.md). Real module inventory/admission/approval integration remains a gate. No provider mutation or public execution command.
 
 ## N12 NanoSwitch
