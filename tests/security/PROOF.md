@@ -1,0 +1,6 @@
+# N14a proof pack
+
+- Parent: [N14](../../tickets/001-nanoad/N14-isolation-and-safety.md), [NAN-001](../../specs/001-nanoad.md). Added bounded read-only VM inventory primitives, strict typed adverse-state policy, Windows native global mutex and handle-based path observation, closed refusal codes, threat model and recovery instructions.
+- Decisions: dedicated exclusive provider configuration (any foreign VM is a refusal); fail closed on unknown scope and attachments; fixed global mutex, no fallback; only conventional ASCII local drive paths, reject hardlinks/reparse/aliases. Return model compatibility, never a mutation permit. Supporting source/test/build/trace additions documented in ticket.
+- Checks: hosted Windows/Linux formatting, unit tests, local process/NTFS observations, provider fixture and smoke tests. Inspect actual CI before merging. Synthetic evidence is not complete native isolation or real VM qualification.
+- Remaining: full native peer/media/attachment collector, guest route policy and health attestation, machine-wide lock wiring, trusted root ACL and TOCTOU qualification, real adverse VirtualBox states and independent review. No actual lab or host configuration changed; no migration or new runtime dependencies. Rollback: revert scoped commits; preserve journals/VMs/media.

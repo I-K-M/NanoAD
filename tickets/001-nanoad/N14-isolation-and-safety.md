@@ -1,6 +1,6 @@
 # N14 — isolation and safety
 
-Status: pending
+Status: experimental safety primitives and tests; native qualification pending
 
 Parent: [NAN-001](../../specs/001-nanoad.md), [NAN-002](../../specs/002-resource-research.md), [NAN-003](../../specs/003-module-lifecycle.md)
 
@@ -14,7 +14,7 @@ N12.
 
 ## Allowed boundary
 
-tests/security/; docs/threat-model.md; docs/recovery.md. Changes outside this boundary require a reviewed ticket update.
+tests/security/; docs/threat-model.md; docs/recovery.md. Proposed supporting changes: src/security/, typed read-only provider list operations and fixture harness, main test imports and state lock harness, docs/DEVELOPMENT-TRACE.md. Independent review required; no mutation enablement.
 
 ## Acceptance criteria
 

@@ -30,6 +30,11 @@ pub fn main() !void {
     var output: [256]u8 = undefined;
     try std.testing.expectEqualStrings("7.1.10r169112\r\n", try transport.invoke(&request, &output));
 
+    const registered: commands.Request = .{ .operation = .list_vms };
+    const running: commands.Request = .{ .operation = .list_running };
+    try std.testing.expectEqualStrings("\"fixture\" {01234567-89ab-cdef-0123-456789abc003}\r\n", try transport.invoke(&registered, &output));
+    try std.testing.expectEqualStrings("", try transport.invoke(&running, &output));
+
     var wrong_hash = hash;
     wrong_hash[0] ^= 1;
     var wrong = try NativeTransport.init(args[1], wrong_hash);

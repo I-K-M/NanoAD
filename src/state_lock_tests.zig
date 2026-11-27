@@ -1,5 +1,7 @@
 // CI-only process harness. No production CLI or real VM is invoked.
 const std = @import("std");
+const builtin = @import("builtin");
+const HostLock = @import("security/host_lock.zig").HostLock;
 const Lock = @import("state/lock.zig").Lock;
 const Store = @import("state/journal.zig").Store;
 const model = @import("state/model.zig");
@@ -16,6 +18,14 @@ fn runChild(executable: []const u8, mode: []const u8, root: []const u8, expected
 pub fn main() !void {
     const args = try std.process.argsAlloc(std.heap.page_allocator);
     defer std.process.argsFree(std.heap.page_allocator, args);
+    if (args.len == 3 and std.mem.eql(u8, args[1], "try-host-lock")) {
+        var lock = HostLock.acquire() catch |err| {
+            if (err == error.HostLockBusy) std.process.exit(17);
+            return err;
+        };
+        try lock.release();
+        return;
+    }
     if (args.len == 3) {
         var dir = try std.fs.cwd().openDir(args[2], .{});
         defer dir.close();
@@ -55,6 +65,13 @@ pub fn main() !void {
     defer if (held) lock.close();
     var path_buffer: [std.fs.max_path_bytes]u8 = undefined;
     const executable = try std.fs.selfExePath(&path_buffer);
+    if (builtin.os.tag == .windows and builtin.cpu.arch == .x86_64) {
+        var global = try HostLock.acquire();
+        try std.testing.expectError(error.HostLockBusy, HostLock.acquire());
+        try runChild(executable, "try-host-lock", "different-lab-root", 17);
+        try global.release();
+        try runChild(executable, "try-host-lock", "different-lab-root", 0);
+    }
     try runChild(executable, "try-lock", &name, 17);
     lock.close();
     held = false;

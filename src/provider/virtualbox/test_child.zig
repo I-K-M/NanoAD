@@ -9,6 +9,14 @@ pub fn main() !void {
         try out.writeAll("7.1.10r169112\r\n");
         return;
     }
+    if (args.len == 3 and std.mem.eql(u8, args[1], "list")) {
+        if (std.mem.eql(u8, args[2], "vms")) {
+            try out.writeAll("\"fixture\" {01234567-89ab-cdef-0123-456789abc003}\r\n");
+        } else if (!std.mem.eql(u8, args[2], "runningvms")) {
+            std.process.exit(9);
+        }
+        return;
+    }
     if (args.len == 4 and std.mem.eql(u8, args[1], "showvminfo")) {
         if (std.mem.endsWith(u8, args[2], "001")) {
             const block: [4096]u8 = @splat('x');

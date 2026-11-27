@@ -1,7 +1,7 @@
 const std = @import("std");
 const types = @import("../types.zig");
 
-pub const Operation = enum { version, observe, lab_marker, guest_marker, start, graceful_stop };
+pub const Operation = enum { version, list_vms, list_running, observe, lab_marker, guest_marker, start, graceful_stop };
 pub const max_output_bytes: usize = 64 * 1024;
 pub const command_timeout_ms: u32 = 10_000;
 
@@ -32,11 +32,17 @@ pub const Request = struct {
             args.push("--version");
             return args;
         }
+        if (self.operation == .list_vms or self.operation == .list_running) {
+            if (self.vm != null) return error.InvalidResponse;
+            args.push("list");
+            args.push(if (self.operation == .list_vms) "vms" else "runningvms");
+            return args;
+        }
         const id = if (self.vm) |*id| id else return error.InvalidResponse;
         if (!id.valid()) return error.InvalidResponse;
         const uuid = &id.text;
         switch (self.operation) {
-            .version => unreachable,
+            .version, .list_vms, .list_running => unreachable,
             .observe => {
                 args.push("showvminfo");
                 args.push(uuid);
