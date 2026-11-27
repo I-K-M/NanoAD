@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "id": "linux-tools",
+  "version": "0.1.0",
+  "kind": "guest",
+  "enabled_by_default": false,
+  "requires": [],
+  "conflicts": [],
+  "capabilities": [
+    "private_network"
+  ],
+  "resources": {
+    "configured_memory_bytes": 536870912,
+    "peak_extra_memory_bytes": null,
+    "steady_disk_bytes": null,
+    "peak_scratch_bytes": null,
+    "vcpus": 1,
+    "provenance": "unmeasured"
+  },
+  "lifecycle": {
+    "rollback_class": "rebuild",
+    "can_stop": true,
+    "can_archive": true,
+    "retain_by_default": true
+  },
+  "provisioner": "linux-tools-v1",
+  "health_checks": [
+    "guest-ready"
+  ]
+}

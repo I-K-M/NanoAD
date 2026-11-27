@@ -76,6 +76,11 @@ fn module(b: *std.Build, target: std.Build.ResolvedTarget, optimize: std.builtin
         .link_libc = target.result.os.tag == .linux,
         .strip = optimize != .Debug,
     });
+    result.addImport("manifest_assets", b.createModule(.{
+        .root_source_file = b.path("modules/embedded.zig"),
+        .target = target,
+        .optimize = optimize,
+    }));
     if (target.result.os.tag == .windows) result.linkSystemLibrary("kernel32", .{});
     return result;
 }
