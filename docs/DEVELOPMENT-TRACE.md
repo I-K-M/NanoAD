@@ -43,6 +43,8 @@ Strict physical/commit envelopes, shared and per-workload peaks, disk growth and
 
 ## N09 NanoState
 
+[PR #11](https://github.com/I-K-M/NanoAD/pull/11) merged at 2aad5ab8f24e9ecf361870d582059dfbbb31ebf9 after [Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46054099474) passed, including process-exit replay and lock exclusion.
+
 [CI 46053314585](https://github.com/I-K-M/NanoAD/actions/runs/46053314585) passed Linux but failed Windows compilation in Zig 0.14.1's File.tryLock. The Windows lock now calls LockFileEx directly with an exclusive, fail-immediately byte-range lock on the same stable file. The cross-process harness remains the verification gate.
 
 The first durable state slice uses a bounded, append-only, hash-chained JSON event journal and stable OS file lock. Replaying intent/dispatch/completion reconstructs NanoRAM reservations without a separate mutable ledger. Explicit cancellation is limited to undispatched work; ambiguous dispatch is never retried automatically. Read-only reconciliation reports drift and unavailable observations without adopting or deleting resources. See [recovery contract](../tests/recovery/README.md) and [proof pack](../tests/recovery/PROOF.md). Native VM execution, complete inventory/ownership attestation, storage power-loss durability and independent review remain outstanding.

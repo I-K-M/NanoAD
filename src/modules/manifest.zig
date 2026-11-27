@@ -196,8 +196,9 @@ fn preflight(input: []const u8) Failure!void {
                     return error.InvalidManifest;
                 depth -= 1;
             },
-            9, 10, 13, 32...126 => {},
-            else => return error.InvalidManifest,
+            else => {
+                if (c != 9 and c != 10 and c != 13 and (c < 32 or c > 126)) return error.InvalidManifest;
+            },
         }
     }
     if (depth != 0 or in_string) return error.InvalidManifest;
@@ -213,7 +214,7 @@ fn object(value: Value, count: usize) Failure!Object {
 }
 
 fn field(obj: Object, key: []const u8) Failure!Value {
-    return obj.get(key) orelse error.UnknownField;
+    return obj.get(key) orelse return error.UnknownField;
 }
 
 fn string(value: Value) Failure![]const u8 {
@@ -235,7 +236,7 @@ fn bounded(value: Value, limit: u64) Failure!?u64 {
 }
 
 fn enumValue(comptime T: type, value: Value, invalid: Failure) Failure!T {
-    return std.meta.stringToEnum(T, try string(value)) orelse invalid;
+    return std.meta.stringToEnum(T, try string(value)) orelse return invalid;
 }
 
 fn idList(value: Value) Failure!List(Id) {

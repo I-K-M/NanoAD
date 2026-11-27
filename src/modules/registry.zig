@@ -182,3 +182,20 @@ test "bounded malformed input mutation smoke, no external execution" {
         if (manifest.parse(core.json[0..n])) |_| return error.TruncatedInputAccepted else |_| {}
     }
 }
+
+test "one-sided conflict is symmetric; conflicting prerequisite closure refuses" {
+    const core = fixture("ad-core.json");
+    const member = fixture("member-server.json");
+    const tools = fixture("linux-tools.json");
+    const secondary = fixture("second-dc.json");
+    var a: [manifest.max_manifest_bytes]u8 = undefined;
+    var b: [manifest.max_manifest_bytes]u8 = undefined;
+    const conflict = try edited("\"conflicts\": []", "\"conflicts\": [\"linux-tools\"]", member, &a);
+    const registry = try Registry.fromSources(&.{ core, conflict, tools });
+    const member_index = registry.index(try manifest.Id.parse("member-server")).?;
+    const tools_index = registry.index(try manifest.Id.parse("linux-tools")).?;
+    try std.testing.expect(registry.conflicts[member_index] & bit(tools_index) != 0);
+    try std.testing.expect(registry.conflicts[tools_index] & bit(member_index) != 0);
+    const impossible = try edited("\"ad-core\"", "\"ad-core\", \"member-server\", \"linux-tools\"", secondary, &b);
+    try std.testing.expectError(error.Conflict, Registry.fromSources(&.{ core, conflict, tools, impossible }));
+}
