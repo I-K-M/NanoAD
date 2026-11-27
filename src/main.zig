@@ -64,4 +64,8 @@ test {
     _ = @import("governor/bounds.zig");
     _ = @import("governor/admission.zig");
     _ = @import("host/metrics/windows.zig");
+    _ = @import("state/model.zig");
+    _ = @import("state/journal.zig");
+    _ = @import("lifecycle/transaction/reconcile.zig");
+    _ = @import("lifecycle/transaction/coordinator.zig");
 }
