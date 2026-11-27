@@ -1,6 +1,6 @@
 # N05 — Zig bootstrap verification
 
-Status: draft; real-host validation pending. Initial CI: Linux formatting and unit tests passed, explicit optimisation flag failed; Windows formatting failed on checkout line endings. Follow-up fixes pending CI.
+Status: draft; real-host validation pending. Initial CI: Linux formatting and unit tests passed, explicit optimisation flag failed; Windows formatting failed on checkout line endings. Second CI: format, unit tests and ReleaseSafe builds passed on both hosts; smoke-test wrapper exited non-zero after the deliberately invalid command. Explicit wrapper success exit added; final smoke validation pending.
 
 The first executable supports help, version, and read-only doctor. It does not launch a subprocess or mutate lab/host state. It reports nullable measurements, never marks a provider or network ready, and returns 3 on the provisional Windows reference target or 8 on other targets. Linux reports host hints only (not cgroup-aware admission). Provider discovery is limited to a known Windows default path; no version or runtime compatibility is inferred. Use N01 for broader inventory.
 
@@ -28,7 +28,7 @@ zig build -Doptimize=ReleaseSafe
 
 Then run the executable in zig-out/bin. Expect help/version exit 0, invalid input exit 2, doctor exit 3 on Windows x86-64 and 8 on Linux. JSON doctor must have schema_version 1, result unqualified, provider_runtime_verified false, isolation_verified false, and no private paths or credentials. The no-mutation contract is tested in a disposable working directory; executable and output are outside that directory.
 
-Measure actual executable bytes and simple-command RSS separately on both hosts. Do not infer the target from optimisation flags. CI provides compilation and unit/smoke tests on both platforms. No real Windows/VirtualBox lab tests or independent review yet.
+Second CI measured ReleaseSafe executable file sizes: Linux 168,136 bytes; Windows 123,392 bytes. These are bootstrap-only measurements, not final product sizes. Measure simple-command RSS separately on both hosts. Do not infer the target from optimisation flags. CI provides compilation and unit/smoke tests on both platforms. No real Windows/VirtualBox lab tests or independent review yet.
 
 ## Rollback
 

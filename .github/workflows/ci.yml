@@ -59,6 +59,7 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
+          $PSNativeCommandUseErrorActionPreference = $false
           $exeName = if ($IsWindows) { 'nanoad.exe' } else { 'nanoad' }
           $exe = (Resolve-Path (Join-Path 'zig-out/bin' $exeName)).Path
           Write-Host "Executable bytes: $((Get-Item $exe).Length)"
@@ -82,3 +83,5 @@ jobs:
           } finally {
             Pop-Location
           }
+          # Expected non-zero CLI exit codes were explicitly asserted above.
+          exit 0
