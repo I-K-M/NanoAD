@@ -15,6 +15,10 @@ pub const Failure = accounting.Failure || error{
     NestedOverlay,
     CapacityMismatch,
     UnsealedBase,
+    BaseProtected,
+    StalePlan,
+    InvalidChild,
+    AllocationExceeded,
     NotFound,
     Referenced,
     Pinned,
@@ -224,4 +228,19 @@ test "overlay target is derived only from a canonical UUID" {
     var bad = good;
     bad.text[0] = '/';
     try std.testing.expectError(error.InvalidIdentity, overlayPath(bad));
+}
+
+test "base identity deduplication and purge protections fail closed" {
+    var disks = [_]Disk{ example_base, exampleOverlay("3", "4", "5") };
+    const catalogue = exampleCatalogue(&disks);
+    disks[1].pinned = true;
+    try std.testing.expectError(error.Pinned, catalogue.purgeEligible(disks[1].medium));
+    disks[1].pinned = false;
+    disks[1].attachment = .unknown;
+    try std.testing.expectError(error.NotDetached, catalogue.purgeEligible(disks[1].medium));
+    disks[1].attachment = .powered_off_guest;
+    try std.testing.expectError(error.NotDetached, catalogue.purgeEligible(disks[1].medium));
+    disks[1] = example_base;
+    disks[1].medium = exampleId("9");
+    try std.testing.expectError(error.DuplicateBase, catalogue.validate());
 }
