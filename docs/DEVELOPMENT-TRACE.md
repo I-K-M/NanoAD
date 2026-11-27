@@ -23,6 +23,14 @@ Added bounded host/guest memory and CPU sampling, JSONL summary, conservative NT
 
 [PR #7](https://github.com/I-K-M/NanoAD/pull/7) prepares a Zig-only provider protocol and lifecycle contract, with fixed-size identities, bounded response parsing, typed requests, explicit authorisation and fake-backend tests. Static review hardened UUID validation at the encoding boundary and added bridged/NAT rejection tests. CLI integration is deliberately absent until a bounded native transport, N08 admission, N09 durable state/ownership and independent isolation/readiness checks exist. [Initial CI](https://github.com/I-K-M/NanoAD/actions/runs/46049998085) found an unavailable std.mem.trimEnd API on pinned Zig 0.14.1; replaced with explicit bounded CRLF handling and added a regression test. Hosted tests do not exercise a real VM. See [provider verification](../tests/provider/README.md). The trace and build/test wiring are supporting additions outside the original N06 boundary.
 
+## N06b native transport
+
+N06a [PR #7](https://github.com/I-K-M/NanoAD/pull/7) merged at c32708a2d7227bffcb595b58f2c16d7f91624c54 following [successful Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46050136000).
+
+N06b [initial CI](https://github.com/I-K-M/NanoAD/actions/runs/46050833308): Linux passed; Windows compilation failed at the explicit handle-list pointer conversion. Corrected the Win32 ABI pointer cast. [Second CI](https://github.com/I-K-M/NanoAD/actions/runs/46051210124) compiled Windows but found a child-exit race on output overflow. Close capture readers before bounded cleanup; verify the signalled child handle rather than treating a racing TerminateProcess failure as proof of failed cleanup. Third validation pending.
+
+N06b adds read-only Windows native subprocess transport, executable digest verification, explicit handle allowlist, bounded separate stdout/stderr, post-launch deadline and child-only cleanup. A fixture executable verifies process mechanics; actual VirtualBox/AD remains untested. The transport refuses mutations and is not exposed in the CLI. The implementation is a partial N06 deliverable; build and test wiring and this trace are supporting additions. See [native transport contract](../tests/provider/NATIVE-TRANSPORT.md).
+
 ## Qualification status
 
 N01–N04 remain open as research gates despite code integration. N05 hosted CI passed; real host and resource evidence remain pending. Do not label any Windows profile qualified. No production deployment or paid resources. Revert scoped commits if needed; do not automatically reset or delete a guest.
