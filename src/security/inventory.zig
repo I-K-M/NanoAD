@@ -224,8 +224,8 @@ pub fn verify(state: *const model.State, snapshot: Snapshot, now: u64) Failure!R
             if (!vm.markers_verified or !vm.nic_inventory_complete or !vm.guest_network_verified)
                 return error.IncompleteEvidence;
             for ([_]?u32{
-                vm.shared_folders, vm.port_forwards, vm.usb_controllers, vm.usb_filters,
-                vm.host_devices, vm.serial_parallel_ports, vm.other_media, vm.snapshots,
+                vm.shared_folders,            vm.port_forwards,         vm.usb_controllers, vm.usb_filters,
+                vm.host_devices,              vm.serial_parallel_ports, vm.other_media,     vm.snapshots,
                 vm.extra_storage_attachments,
             }) |value| try zero(value);
             for ([_]?bool{ vm.clipboard_disabled, vm.drag_drop_disabled, vm.remote_display_disabled }) |value| try enabled(value);
@@ -376,8 +376,9 @@ test "compatible synthetic inventory never issues a mutation permit" {
 test "every unsafe or unknown VM attachment fails closed" {
     const baseline = try Fixture.init();
     const fields = .{
-        "shared_folders", "port_forwards", "usb_controllers", "usb_filters",
-        "host_devices", "serial_parallel_ports", "other_media", "snapshots", "extra_storage_attachments",
+        "shared_folders",            "port_forwards",         "usb_controllers", "usb_filters",
+        "host_devices",              "serial_parallel_ports", "other_media",     "snapshots",
+        "extra_storage_attachments",
     };
     inline for (fields) |field| {
         var f = baseline;
