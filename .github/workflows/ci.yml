@@ -50,7 +50,12 @@ jobs:
           $ErrorActionPreference = 'Stop'
           if ((zig version) -ne '0.14.1' -or $LASTEXITCODE -ne 0) { throw 'Unexpected Zig version' }
           zig fmt --check build.zig src modules
-          if ($LASTEXITCODE -ne 0) { throw 'Format check failed' }
+          if ($LASTEXITCODE -ne 0) {
+            # Show the exact formatter diff in the disposable runner without committing.
+            zig fmt build.zig src modules
+            git diff -- build.zig src modules
+            throw 'Format check failed'
+          }
           zig build test
           if ($LASTEXITCODE -ne 0) { throw 'Unit tests failed' }
           zig build -Doptimize=ReleaseSafe

@@ -145,7 +145,8 @@ test "invalid schema, duplicate fields and execution hooks cannot be loaded" {
     try std.testing.expectError(error.InvalidResources, manifest.parse((try edited("2147483648", "17592186044417", core, &buffer)).json));
     try std.testing.expectError(error.InvalidManifest, manifest.parse((try edited("\"schema_version\": 1", "\"schema_version\": 1, \"schema_version\": 1", core, &buffer)).json));
     try std.testing.expectError(error.UnknownField, manifest.parse((try edited("\"schema_version\": 1", "\"schema_version\": 1, \"script\": \"run.exe\"", core, &buffer)).json));
-    try std.testing.expectError(error.InvalidFilename, Registry.fromSources(&.{.{ .filename = "../ad-core.json", .json = core.json }}));
+    const invalid_source: assets.Source = .{ .filename = "../ad-core.json", .json = core.json };
+    try std.testing.expectError(error.InvalidFilename, Registry.fromSources(&.{invalid_source}));
     try std.testing.expectError(error.DuplicateModule, Registry.fromSources(&.{ core, core }));
 }
 
@@ -179,7 +180,9 @@ test "bounded malformed input mutation smoke, no external execution" {
         try std.testing.expectError(error.InvalidManifest, manifest.parse(bytes[0..core.json.len]));
     }
     for (0..@min(core.json.len, 80)) |n| {
-        if (manifest.parse(core.json[0..n])) |_| return error.TruncatedInputAccepted else |_| {}
+        if (manifest.parse(core.json[0..n])) |_| {
+            return error.TruncatedInputAccepted;
+        } else |_| {}
     }
 }
 
