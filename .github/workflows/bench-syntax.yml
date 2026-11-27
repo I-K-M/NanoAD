@@ -1,0 +1,43 @@
+name: NanoBench syntax and synthetic tests
+on:
+  pull_request:
+    paths:
+      - 'benchmarks/protocol/**'
+      - '.github/workflows/bench-syntax.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'benchmarks/protocol/**'
+      - '.github/workflows/bench-syntax.yml'
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: windows-2022
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Parse and test Windows PowerShell 5.1
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in Get-ChildItem benchmarks/protocol -Filter *.ps1 -File) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName,[ref]$tokens,[ref]$errors)
+            if ($errors.Count -gt 0) { $errors | Format-List; throw "Syntax error: $($file.Name)" }
+          }
+          & ./benchmarks/protocol/Test-NanoADBench.ps1
+      - name: Parse and test PowerShell 7
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          foreach ($file in Get-ChildItem benchmarks/protocol -Filter *.ps1 -File) {
+            $tokens = $null
+            $errors = $null
+            [void][System.Management.Automation.Language.Parser]::ParseFile($file.FullName,[ref]$tokens,[ref]$errors)
+            if ($errors.Count -gt 0) { $errors | Format-List; throw "Syntax error: $($file.Name)" }
+          }
+          & ./benchmarks/protocol/Test-NanoADBench.ps1
