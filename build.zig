@@ -31,6 +31,17 @@ pub fn build(b: *std.Build) void {
     const run_provider_tests = b.addRunArtifact(provider_tests);
     test_step.dependOn(&run_provider_tests.step);
 
+    const lock_harness = b.addExecutable(.{
+        .name = "state-lock-tests",
+        .root_module = b.createModule(.{
+            .root_source_file = b.path("src/state_lock_tests.zig"),
+            .target = target,
+            .optimize = optimize,
+        }),
+    });
+    const run_lock_harness = b.addRunArtifact(lock_harness);
+    test_step.dependOn(&run_lock_harness.step);
+
     if (target.result.os.tag == .windows and target.result.cpu.arch == .x86_64) {
         const child = b.addExecutable(.{
             .name = "VBoxManage",

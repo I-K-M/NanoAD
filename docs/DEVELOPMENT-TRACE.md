@@ -37,7 +37,13 @@ N06b adds read-only Windows native subprocess transport, executable digest verif
 
 ## N08 NanoRAM
 
+[PR #10](https://github.com/I-K-M/NanoAD/pull/10) merged at d054c208194e5e49ac35ff97f94c4d98c2c5478b after [Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46052399934) passed.
+
 Strict physical/commit envelopes, shared and per-workload peaks, disk growth and scratch admission, fresh native Windows observations and a revisioned in-memory reservation ledger. Estimates and unknown costs cannot pass strict admission. No auto-stop, OS-enforced reservation or live-provider mutation is wired. See [governor contract](../tests/governor/README.md) and [proof pack](../tests/governor/PROOF.md). Real overhead measurement, reconciliation, durable N09 lock and independent review remain outstanding.
+
+## N09 NanoState
+
+The first durable state slice uses a bounded, append-only, hash-chained JSON event journal and stable OS file lock. Replaying intent/dispatch/completion reconstructs NanoRAM reservations without a separate mutable ledger. Explicit cancellation is limited to undispatched work; ambiguous dispatch is never retried automatically. Read-only reconciliation reports drift and unavailable observations without adopting or deleting resources. See [recovery contract](../tests/recovery/README.md) and [proof pack](../tests/recovery/PROOF.md). Native VM execution, complete inventory/ownership attestation, storage power-loss durability and independent review remain outstanding.
 
 ## Qualification status
 
