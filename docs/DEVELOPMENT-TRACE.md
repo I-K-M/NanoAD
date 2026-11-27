@@ -63,7 +63,13 @@ The pure switch planner takes a trusted revisioned inventory and bundled depende
 
 ## N12 NanoSwitch
 
+[PR #14](https://github.com/I-K-M/NanoAD/pull/14) merged at e83c237c732dce59b24e38bd061a621d33b90af1 after [Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46059307163) passed.
+
 Internal session executor recomputes an exact approved plan, validates all owned guest identities, costs and fresh evidence, rechecks each transitional/after-step envelope through NanoRAM/NanoDisk and uses N09 synced intent/dispatch/completion. Default refusal, read-only preview, one provider call per step, no automatic retry or compensation. Failure preserves earlier committed steps and ambiguous reservations; a fresh plan and consent are required after interruption. Full session progress/hash is not durable beyond individual N09 events. See [switch contract](../tests/switch/README.md) and [proof pack](../tests/switch/PROOF.md). Native execution, host-wide lock, complete attestation and independent review remain pending.
+
+## N13 native optional modules
+
+Native member-server provisioning scripts and read-only health checks target one distinct Server Core guest; explicit signed/sealed Kerberos preflight, guarded local domain join with a durable create-new intent, no automatic retry. Directory-fixtures reuse the N03 provisioner and add read-only identity/ACL inventory. Pure restart comparison verifies stable directory GUIDs and later boot in supplied passing reports, not provenance or real provider release. See [module integration checklist](../tests/integration/modules/README.md) and [proof pack](../tests/integration/modules/PROOF.md). Real host, actual domain join/fidelity, memory/disk qualification, real switch and independent review remain pending.
 
 ## Qualification status
 

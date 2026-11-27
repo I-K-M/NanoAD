@@ -109,7 +109,7 @@ pub const Provisioner = enum {
 
     pub fn availability(self: Provisioner) Availability {
         return switch (self) {
-            .@"windows-core-v1", .@"windows-reference-fixture-v1" => .experimental_scripts,
+            .@"windows-core-v1", .@"windows-reference-fixture-v1", .@"windows-member-v1" => .experimental_scripts,
             else => .planned,
         };
     }

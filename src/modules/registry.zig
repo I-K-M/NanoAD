@@ -133,7 +133,7 @@ test "shipped catalogue is stable, read-only and core-only by default" {
     const member = registry.index(try manifest.Id.parse("member-server")).?;
     try std.testing.expectEqual(bit(core), registry.closure[member]);
     try std.testing.expect(!registry.find(try manifest.Id.parse("directory-fixtures")).?.lifecycle.can_stop);
-    try std.testing.expectEqual(manifest.Availability.planned, registry.entries[member].provisioner.availability());
+    try std.testing.expectEqual(manifest.Availability.experimental_scripts, registry.entries[member].provisioner.availability());
 }
 
 test "invalid schema, duplicate fields and execution hooks cannot be loaded" {
