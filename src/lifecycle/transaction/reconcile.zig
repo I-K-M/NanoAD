@@ -29,7 +29,7 @@ pub fn inspect(state: *const model.State, backend: anytype) Report {
         };
         const phase = state.phases[i];
         const identity_ok = observed.vm.eql(guest.owner.vm) and observed.memory_bytes == guest.cost.guest_bytes;
-        const status: Status = if (!identity_ok)
+        const status: Status = if (!identity_ok or observed.network != .compatible)
             .drift
         else if (phase == .pending or phase == .stopping)
             .interrupted
@@ -90,6 +90,9 @@ test "read-only reconciliation never invents a complete inventory or releases re
     const first = inspect(&initial, &fake);
     try std.testing.expectEqual(Status.matched, first.items[0].?.status);
     try std.testing.expect(!first.complete_inventory_verified);
+    fake.observation.network = .rejected;
+    try std.testing.expectEqual(Status.drift, inspect(&initial, &fake).items[0].?.status);
+    fake.observation.network = .compatible;
     fake.observation.power = .running;
     try std.testing.expectEqual(Status.drift, inspect(&initial, &fake).items[0].?.status);
     fake.fail = true;

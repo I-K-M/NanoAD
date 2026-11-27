@@ -1,6 +1,8 @@
 // CI-only process harness. No production CLI or real VM is invoked.
 const std = @import("std");
 const Lock = @import("state/lock.zig").Lock;
+const Store = @import("state/journal.zig").Store;
+const model = @import("state/model.zig");
 
 fn runChild(executable: []const u8, mode: []const u8, root: []const u8, expected: u8) !void {
     var child = std.process.Child.init(&.{ executable, mode, root }, std.heap.page_allocator);
@@ -17,6 +19,20 @@ pub fn main() !void {
     if (args.len == 3) {
         var dir = try std.fs.cwd().openDir(args[2], .{});
         defer dir.close();
+        if (std.mem.eql(u8, args[1], "exit-after-intent")) {
+            var store = try Store.open(dir);
+            const state = try store.state();
+            const guest = state.initial.guests[0].?.owner.guest;
+            try store.append(state.revision, .{ .kind = .intent, .operation = .{ .serial = state.revision + 1, .guest = guest, .kind = .start } });
+            // Intentionally bypass close/defer, as an interrupted CLI would.
+            std.process.exit(19);
+        }
+        if (std.mem.eql(u8, args[1], "exit-after-dispatch")) {
+            var store = try Store.open(dir);
+            const state = try store.state();
+            try store.append(state.revision, .{ .kind = .dispatch, .serial = state.operation.?.serial });
+            std.process.exit(19);
+        }
         var lock = Lock.acquire(dir) catch |err| {
             if (err == error.LockBusy) std.process.exit(17);
             return err;
@@ -45,5 +61,25 @@ pub fn main() !void {
     try runChild(executable, "try-lock", &name, 0);
     try runChild(executable, "exit-with-lock", &name, 19);
     try runChild(executable, "try-lock", &name, 0);
-    try std.io.getStdOut().writeAll("Cross-process lock exclusion and process-exit release passed.\n");
+    try dir.makeDir("journal");
+    var journal_dir = try dir.openDir("journal", .{});
+    defer journal_dir.close();
+    var store = try Store.create(journal_dir, model.exampleInitial());
+    store.close();
+    var root_buffer: [std.fs.max_path_bytes]u8 = undefined;
+    const journal_root = try std.fmt.bufPrint(&root_buffer, "{s}{c}journal", .{ &name, std.fs.path.sep });
+    try runChild(executable, "exit-after-intent", journal_root, 19);
+    store = try Store.open(journal_dir);
+    const pending = try store.state();
+    try std.testing.expectEqual(model.Stage.intent, pending.operation.?.stage);
+    try std.testing.expectEqual(@as(usize, 1), (try pending.ledger()).len);
+    store.close();
+    try runChild(executable, "exit-after-dispatch", journal_root, 19);
+    store = try Store.open(journal_dir);
+    defer store.close();
+    const interrupted = try store.state();
+    try std.testing.expectEqual(model.Stage.dispatch, interrupted.operation.?.stage);
+    try std.testing.expectEqual(@as(usize, 1), (try interrupted.ledger()).len);
+    try std.testing.expectError(error.RecoveryRequired, store.append(interrupted.revision, .{ .kind = .cancel, .serial = interrupted.operation.?.serial }));
+    try std.io.getStdOut().writeAll("Cross-process lock exclusion, process-exit release and durable intent/dispatch replay passed.\n");
 }

@@ -14,6 +14,9 @@ pub const Evidence = struct {
     markers_verified: bool = false,
     inventory_verified: bool = false,
     media_verified: bool = false,
+    observed_medium: ?ids.Uuid = null,
+    observed_parent: ?ids.Uuid = null,
+    observed_base_sha256: ?[64]u8 = null,
     native_ready: bool = false,
     scratch_accounted: bool = false,
     release_verified: bool = false,
@@ -28,6 +31,11 @@ fn check(state: *const model.State, evidence: Evidence, guest: ids.Uuid, now_ms:
     if (!evidence.owner.valid() or !record.owner.lab.eql(evidence.owner.lab) or
         !record.owner.guest.eql(evidence.owner.guest) or !record.owner.vm.eql(evidence.owner.vm) or
         !record.owner.vm.eql(evidence.observed.vm) or evidence.observed.memory_bytes != record.cost.guest_bytes)
+        return error.InvalidOwnership;
+    const medium = evidence.observed_medium orelse return error.UnverifiedEvidence;
+    const parent = evidence.observed_parent orelse return error.UnverifiedEvidence;
+    const digest = evidence.observed_base_sha256 orelse return error.UnverifiedEvidence;
+    if (!medium.eql(record.medium) or !parent.eql(record.parent) or !std.mem.eql(u8, &digest, &record.base_sha256))
         return error.InvalidOwnership;
     return record;
 }
@@ -134,6 +142,9 @@ fn fixtureEvidence(state: model.State, power: ids.PowerState) Evidence {
         .markers_verified = true,
         .inventory_verified = true,
         .media_verified = true,
+        .observed_medium = record.medium,
+        .observed_parent = record.parent,
+        .observed_base_sha256 = record.base_sha256,
         .native_ready = true,
         .scratch_accounted = true,
         .release_verified = true,
@@ -207,6 +218,12 @@ test "approval and missing reconciliation cannot persist intent; cancellation is
     evidence.inventory_verified = false;
     try std.testing.expectError(error.UnverifiedEvidence, beginStart(&store, guest, true, evidence, fixtureSnapshot(1), test_budget, 1001));
     evidence.inventory_verified = true;
+    evidence.observed_parent = model.exampleId("9");
+    try std.testing.expectError(error.InvalidOwnership, beginStart(&store, guest, true, evidence, fixtureSnapshot(1), test_budget, 1001));
+    evidence = fixtureEvidence(state, .powered_off);
+    evidence.observed_base_sha256.?[0] = 'b';
+    try std.testing.expectError(error.InvalidOwnership, beginStart(&store, guest, true, evidence, fixtureSnapshot(1), test_budget, 1001));
+    evidence = fixtureEvidence(state, .powered_off);
     try std.testing.expectError(error.UnverifiedEvidence, beginStart(&store, guest, true, evidence, fixtureSnapshot(1), test_budget, 3001));
     try std.testing.expectEqual(@as(u64, 1), (try store.state()).revision);
     const serial = try beginStart(&store, guest, true, evidence, fixtureSnapshot(1), test_budget, 1001);

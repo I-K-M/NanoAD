@@ -213,3 +213,21 @@ test "changed complete frame is rejected, not repaired" {
     }
     try std.testing.expectError(error.JournalCorrupt, Store.open(tmp.dir));
 }
+
+test "unexpected external append poisons writer rather than allowing another commit" {
+    var tmp = std.testing.tmpDir(.{});
+    defer tmp.cleanup();
+    var store = try Store.create(tmp.dir, model.exampleInitial());
+    const state = try store.state();
+    const guest = state.initial.guests[0].?.owner.guest;
+    // Simulate a failed/partial write that was not reflected in the cache.
+    try store.file.seekFromEnd(0);
+    try store.file.writeAll("partial");
+    try store.file.sync();
+    const event: model.Event = .{ .kind = .intent, .operation = .{ .serial = 2, .guest = guest, .kind = .start } };
+    try std.testing.expectError(error.JournalCorrupt, store.append(1, event));
+    try std.testing.expectError(error.StorePoisoned, store.state());
+    try std.testing.expectError(error.StorePoisoned, store.append(1, event));
+    store.close();
+    try std.testing.expectError(error.JournalCorrupt, Store.open(tmp.dir));
+}
