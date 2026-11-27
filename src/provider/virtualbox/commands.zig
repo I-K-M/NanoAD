@@ -32,7 +32,9 @@ pub const Request = struct {
             args.push("--version");
             return args;
         }
-        const uuid = if (self.vm) |*id| &id.text else return error.InvalidResponse;
+        const id = if (self.vm) |*id| id else return error.InvalidResponse;
+        if (!id.valid()) return error.InvalidResponse;
+        const uuid = &id.text;
         switch (self.operation) {
             .version => unreachable,
             .observe => {
@@ -85,4 +87,8 @@ test "only typed UUID-scoped commands; graceful ACPI stop" {
     try std.testing.expectEqualStrings(&uuid.text, args.items[1]);
     try std.testing.expectEqualStrings("acpipowerbutton", args.items[2]);
     try std.testing.expectError(error.InvalidResponse, (Request{ .operation = .start }).arguments());
+    var invalid = uuid;
+    invalid.text[0] = '-';
+    const malformed: Request = .{ .operation = .start, .vm = invalid };
+    try std.testing.expectError(error.InvalidResponse, malformed.arguments());
 }

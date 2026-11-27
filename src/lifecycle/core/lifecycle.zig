@@ -42,6 +42,7 @@ fn verifyIsolation(observed: types.Observation) types.Failure!void {
 // not a claim of end-to-end elapsed timeout.
 pub fn start(backend: anytype, health: anytype, clock: anytype, owned: types.OwnedGuest, gate: Gate, limits: Limits) types.Failure!void {
     try authorize(gate, true);
+    if (!owned.valid()) return error.OwnershipMismatch;
     try limits.validate();
     const initial = try backend.observe(owned);
     try verifyOwnership(initial, owned);
@@ -67,6 +68,7 @@ pub fn start(backend: anytype, health: anytype, clock: anytype, owned: types.Own
 
 pub fn stop(backend: anytype, clock: anytype, owned: types.OwnedGuest, gate: Gate, limits: Limits) types.Failure!void {
     try authorize(gate, false);
+    if (!owned.valid()) return error.OwnershipMismatch;
     try limits.validate();
     const initial = try backend.observe(owned);
     try verifyOwnership(initial, owned);

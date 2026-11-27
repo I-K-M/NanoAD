@@ -22,6 +22,11 @@ pub const Uuid = struct {
         return result;
     }
 
+    pub fn valid(self: Uuid) bool {
+        const canonical = parse(&self.text) catch return false;
+        return self.eql(canonical);
+    }
+
     pub fn eql(a: Uuid, b: Uuid) bool {
         return std.mem.eql(u8, &a.text, &b.text);
     }
@@ -32,6 +37,11 @@ pub const OwnedGuest = struct {
     lab: Uuid,
     guest: Uuid,
     vm: Uuid,
+
+    pub fn valid(self: OwnedGuest) bool {
+        return self.lab.valid() and self.guest.valid() and self.vm.valid() and
+            !self.lab.eql(self.guest) and !self.lab.eql(self.vm) and !self.guest.eql(self.vm);
+    }
 
     pub fn network(self: OwnedGuest) [43]u8 {
         return "nanoad-".* ++ self.lab.text;

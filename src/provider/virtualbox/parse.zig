@@ -43,6 +43,7 @@ pub fn marker(output: []const u8, expected: types.Uuid) types.Failure!void {
 }
 
 pub fn info(output: []const u8, owned: types.OwnedGuest) types.Failure!types.Observation {
+    if (!owned.valid()) return error.OwnershipMismatch;
     if (output.len == 0 or output.len > commands.max_output_bytes) return error.OutputLimit;
     var uuid: ?[]const u8 = null;
     var state: ?[]const u8 = null;
@@ -179,7 +180,7 @@ test "fail closed on duplicate keys, missing data and wrong identity" {
     try std.testing.expectError(error.InvalidResponse, info(fixture ++ "memory=4096\n", exampleOwned()));
     try std.testing.expectError(error.InvalidResponse, info("memory=2048\n", exampleOwned()));
     var wrong = exampleOwned();
-    wrong.vm = wrong.guest;
+    wrong.vm = try types.Uuid.parse("31234567-89ab-cdef-0123-456789abcdef");
     try std.testing.expectError(error.OwnershipMismatch, info(fixture, wrong));
     try std.testing.expectError(error.OwnershipMismatch, marker("No value set!", wrong.lab));
 }
@@ -190,4 +191,12 @@ test "known unsafe attachments rejected; unknown never attests isolation" {
     const incomplete = try info("UUID=\"" ++ vm ++ "\"\nVMState=\"running\"\nmemory=1024\n", exampleOwned());
     try std.testing.expectEqual(types.NetworkEvidence.incomplete, incomplete.network);
     try std.testing.expect(!incomplete.isolation_verified);
+}
+
+test "bridged and NAT network fixtures cannot become compatible" {
+    const prefix = "UUID=\"" ++ vm ++ "\"\nVMState=\"poweroff\"\nmemory=2048\n";
+    const bridge = try info(prefix ++ "nic1=\"bridged\"\n", exampleOwned());
+    const nat = try info(prefix ++ "nic1=\"intnet\"\nnic2=\"nat\"\n", exampleOwned());
+    try std.testing.expectEqual(types.NetworkEvidence.rejected, bridge.network);
+    try std.testing.expectEqual(types.NetworkEvidence.rejected, nat.network);
 }
