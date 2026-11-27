@@ -1,0 +1,84 @@
+name: Zig bootstrap
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-24.04, windows-2022]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Install verified Zig 0.14.1
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($IsWindows) {
+            $archive = 'zig-x86_64-windows-0.14.1.zip'
+            $expected = '554f5378228923ffd558eac35e21af020c73789d87afeabf4bfd16f2e6feed2c'
+          } else {
+            $archive = 'zig-x86_64-linux-0.14.1.tar.xz'
+            $expected = '24aeeec8af16c381934a6cd7d95c807a8cb2cf7df9fa40d359aa884195c4716c'
+          }
+          $dir = Join-Path $env:RUNNER_TEMP 'nanoad-zig'
+          New-Item -ItemType Directory -Path $dir | Out-Null
+          $file = Join-Path $dir $archive
+          Invoke-WebRequest -Uri "https://ziglang.org/download/0.14.1/$archive" -OutFile $file -TimeoutSec 180
+          if ((Get-FileHash $file -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expected) { throw 'Zig digest mismatch' }
+          if ($IsWindows) {
+            Expand-Archive -Path $file -DestinationPath $dir
+          } else {
+            tar -xf $file -C $dir
+            if ($LASTEXITCODE -ne 0) { throw 'Extraction failed' }
+          }
+          $name = if ($IsWindows) { $archive.Replace('.zip','') } else { $archive.Replace('.tar.xz','') }
+          Add-Content -Path $env:GITHUB_PATH -Value (Join-Path $dir $name)
+      - name: Format, test and build
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((zig version) -ne '0.14.1' -or $LASTEXITCODE -ne 0) { throw 'Unexpected Zig version' }
+          zig fmt --check build.zig src
+          if ($LASTEXITCODE -ne 0) { throw 'Format check failed' }
+          zig build test
+          if ($LASTEXITCODE -ne 0) { throw 'Unit tests failed' }
+          zig build -Doptimize=ReleaseSafe
+          if ($LASTEXITCODE -ne 0) { throw 'Build failed' }
+      - name: Smoke tests and read-only working directory
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exeName = if ($IsWindows) { 'nanoad.exe' } else { 'nanoad' }
+          $exe = (Resolve-Path (Join-Path 'zig-out/bin' $exeName)).Path
+          Write-Host "Executable bytes: $((Get-Item $exe).Length)"
+          $work = Join-Path $env:RUNNER_TEMP 'nanoad-empty-smoke'
+          New-Item -ItemType Directory -Path $work | Out-Null
+          Push-Location $work
+          try {
+            & $exe --help
+            if ($LASTEXITCODE -ne 0) { throw 'Help failed' }
+            $version = & $exe version --json
+            if ($LASTEXITCODE -ne 0 -or ($version | ConvertFrom-Json).schema_version -ne 1) { throw 'Version failed' }
+            $output = & $exe doctor --json
+            $code = $LASTEXITCODE
+            $expected = if ($IsWindows) { 3 } else { 8 }
+            if ($code -ne $expected) { throw "Unexpected doctor exit: $code" }
+            $report = $output | ConvertFrom-Json
+            if ($report.schema_version -ne 1 -or $report.result -ne 'unqualified' -or $report.host.provider_runtime_verified -ne $false -or $report.host.isolation_verified -ne $false) { throw 'Unsafe doctor result' }
+            & $exe not-a-command
+            if ($LASTEXITCODE -ne 2) { throw 'Invalid input must fail' }
+            if (@(Get-ChildItem -Force).Count -ne 0) { throw 'Unexpected working-directory mutation' }
+          } finally {
+            Pop-Location
+          }
