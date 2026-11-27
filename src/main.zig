@@ -90,4 +90,5 @@ test {
     _ = @import("lifecycle/transaction/reconcile.zig");
     _ = @import("lifecycle/transaction/coordinator.zig");
     _ = @import("planner/switch.zig");
+    _ = @import("lifecycle/switch/executor.zig");
 }
