@@ -1,0 +1,16 @@
+pub const Facts = struct {
+    executable_os: []const u8,
+    executable_arch: []const u8,
+    supported_reference_platform: bool,
+    physical_ram_bytes: ?u64 = null,
+    available_ram_bytes: ?u64 = null,
+    commit_headroom_bytes: ?u64 = null,
+    disk_available_to_caller_bytes: ?u64 = null,
+    virtualisation_firmware_hint: ?bool = null,
+    hypervisor_present_hint: ?bool = null,
+    provider: []const u8,
+    provider_candidate_found: ?bool = null,
+    provider_version: ?[]const u8 = null,
+    provider_runtime_verified: bool = false,
+    isolation_verified: bool = false,
+};
