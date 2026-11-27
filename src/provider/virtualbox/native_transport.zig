@@ -238,7 +238,7 @@ pub const NativeTransport = struct {
         const list: *anyopaque = &storage;
         if (InitializeProcThreadAttributeList(list, 1, 0, &size) == 0) return error.ProviderFailure;
         defer DeleteProcThreadAttributeList(list);
-        if (UpdateProcThreadAttribute(list, 0, 0x00020002, &handles, @sizeOf(@TypeOf(handles)), null, null) == 0)
+        if (UpdateProcThreadAttribute(list, 0, 0x00020002, @ptrCast(&handles), @sizeOf(@TypeOf(handles)), null, null) == 0)
             return error.ProviderFailure;
 
         var startup = std.mem.zeroes(StartupInfoEx);
