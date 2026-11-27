@@ -14,6 +14,8 @@ Earlier Zig failures (optimisation flag, Windows line endings, CI exit propagati
 
 ## N04 preparation
 
+Initial [NanoBench CI](https://github.com/I-K-M/NanoAD/actions/runs/46049274646) exposed a Windows file-handle leak on rejected JSONL input: the ReadLines enumerator could retain the file after an exception. Replaced it with an explicitly disposed StreamReader; validation pending.
+
 Added bounded host/guest memory and CPU sampling, JSONL summary, conservative NTFS file-data allocation estimate, experiment instructions, synthetic checks and a Windows CI gate. See [execution protocol](../benchmarks/protocol/EXPERIMENTS.md). Workflow and this trace are explicit supporting additions to the ticket boundary. Exact disk accounting, provider process overhead, latency, real AD comparisons and independent review remain pending. No host or VM was modified by preparing this code.
 
 ## Qualification status
