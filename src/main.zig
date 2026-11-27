@@ -91,4 +91,8 @@ test {
     _ = @import("lifecycle/transaction/coordinator.zig");
     _ = @import("planner/switch.zig");
     _ = @import("lifecycle/switch/executor.zig");
+    _ = @import("security/host_lock.zig");
+    _ = @import("security/windows_path.zig");
+    _ = @import("security/inventory.zig");
+    _ = @import("security/report.zig");
 }

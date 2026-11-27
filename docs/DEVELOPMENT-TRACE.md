@@ -69,7 +69,15 @@ Internal session executor recomputes an exact approved plan, validates all owned
 
 ## N13 native optional modules
 
+[PR #15](https://github.com/I-K-M/NanoAD/pull/15) merged at 8eae6e6607f98cd27899c571890bafcedf8a2812 after [PowerShell](https://github.com/I-K-M/NanoAD/actions/runs/46060224844) and [Zig](https://github.com/I-K-M/NanoAD/actions/runs/46060224822) checks passed.
+
 Native member-server provisioning scripts and read-only health checks target one distinct Server Core guest; explicit signed/sealed Kerberos preflight, guarded local domain join with a durable create-new intent, no automatic retry. Directory-fixtures reuse the N03 provisioner and add read-only identity/ACL inventory. Pure restart comparison verifies stable directory GUIDs and later boot in supplied passing reports, not provenance or real provider release. See [module integration checklist](../tests/integration/modules/README.md) and [proof pack](../tests/integration/modules/PROOF.md). Real host, actual domain join/fidelity, memory/disk qualification, real switch and independent review remain pending.
+
+## N14 isolation and safety
+
+[CI 46060788944](https://github.com/I-K-M/NanoAD/actions/runs/46060788944) passed Linux and Windows unit/process-lock tests but failed the separate native transport fixture with Unsupported. Stage the test artifact under the local user directory and identify the failing stage without weakening the native fixed-drive guard. Revalidation required.
+
+Added strict normalised inventory policy (model compatibility only), read-only registered/running VM commands, Windows machine-wide cooperative mutex, handle-based fixed-drive path observation, bounded refusal codes, threat model and recovery policy. [Security contract](../tests/security/README.md) and [proof pack](../tests/security/PROOF.md) record the native/fake tests and limitations. Full provider-account/peer/media collection, guest network evidence, real host lock integration, trusted ACLs and independent review remain gates. Native mutation transport remains disabled.
 
 ## Qualification status
 

@@ -49,6 +49,7 @@ const FakeTransport = struct {
         if (timeout != commands.command_timeout_ms) return error.Timeout;
         const data: []const u8 = switch (req.operation) {
             .version => "7.1.10r169112\n",
+            .list_vms, .list_running => "",
             .lab_marker => if (self.wrong_marker) "No value set!" else "Value: 01234567-89ab-cdef-0123-456789abcdef\n",
             .guest_marker => "Value: 11234567-89ab-cdef-0123-456789abcdef\n",
             .observe => parse.fixture,
