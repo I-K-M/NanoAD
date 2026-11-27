@@ -1,0 +1,33 @@
+# Zig build output
+.zig-cache/
+zig-cache/
+zig-out/
+# Local lab state and credentials
+.nanoad/
+.env
+.env.*
+*.key
+*.pfx
+*.pem
+# Media and VM artefacts
+*.iso
+*.wim
+*.esd
+*.vdi
+*.vmdk
+*.vhd
+*.vhdx
+*.qcow2
+*.ova
+*.ovf
+*.sav
+*.vbox
+*.vbox-prev
+*.img
+*.box
+# Local generated evidence
+benchmarks/raw/
+*.evtx
+*.pcap
+*.pcapng
+*.log
