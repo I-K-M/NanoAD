@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "kind": "candidate",
+  "run_id": null,
+  "operator_id": null,
+  "host_id": null,
+  "commit": null,
+  "provider_version": null,
+  "guest_build": null,
+  "base_sha256": null,
+  "recipe_sha256": null,
+  "workload_sha256": null,
+  "started_unix_ms": null,
+  "completed_unix_ms": null,
+  "host_installed_ram_bytes": null,
+  "guest_configured_ram_bytes": null,
+  "cold_boot_count": null,
+  "min_idle_seconds": null,
+  "min_workload_seconds": null,
+  "soak_seconds": null,
+  "sample_interval_seconds": null,
+  "installed_upper_bound_bytes": null,
+  "all_in_upper_bound_bytes": null,
+  "build_peak_bytes": null,
+  "provider_peak_physical_bytes": null,
+  "provider_peak_commit_bytes": null,
+  "host_min_available_bytes": null,
+  "host_min_commit_headroom_bytes": null,
+  "physical_reserve_bytes": null,
+  "commit_reserve_bytes": null,
+  "boot_to_ready_p95_ms": null,
+  "workload_p50_ms": null,
+  "workload_p95_ms": null,
+  "workload_timeout_ms": null,
+  "cli_bytes": null,
+  "cli_peak_rss_bytes": null,
+  "nanoad_processes_after_stop": null,
+  "unexpected_crashes": null,
+  "sustained_headroom_breaches": null,
+  "repeated_excessive_paging": null,
+  "checks": [
+    {
+      "id": "AC-01",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-02",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-03",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-04",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-05",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-06",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-07",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-08",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-09",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-10",
+      "status": "not_run",
+      "evidence_sha256": null
+    },
+    {
+      "id": "AC-11",
+      "status": "not_run",
+      "evidence_sha256": null
+    }
+  ],
+  "raw_evidence_sha256": null
+}
