@@ -27,7 +27,7 @@ Added bounded host/guest memory and CPU sampling, JSONL summary, conservative NT
 
 N06a [PR #7](https://github.com/I-K-M/NanoAD/pull/7) merged at c32708a2d7227bffcb595b58f2c16d7f91624c54 following [successful Windows/Linux CI](https://github.com/I-K-M/NanoAD/actions/runs/46050136000).
 
-N06b [initial CI](https://github.com/I-K-M/NanoAD/actions/runs/46050833308): Linux passed; Windows compilation failed at the explicit handle-list pointer conversion. Corrected the Win32 ABI pointer cast; revalidation pending.
+N06b [initial CI](https://github.com/I-K-M/NanoAD/actions/runs/46050833308): Linux passed; Windows compilation failed at the explicit handle-list pointer conversion. Corrected the Win32 ABI pointer cast. [Second CI](https://github.com/I-K-M/NanoAD/actions/runs/46051210124) compiled Windows but found a child-exit race on output overflow. Close capture readers before bounded cleanup; verify the signalled child handle rather than treating a racing TerminateProcess failure as proof of failed cleanup. Third validation pending.
 
 N06b adds read-only Windows native subprocess transport, executable digest verification, explicit handle allowlist, bounded separate stdout/stderr, post-launch deadline and child-only cleanup. A fixture executable verifies process mechanics; actual VirtualBox/AD remains untested. The transport refuses mutations and is not exposed in the CLI. The implementation is a partial N06 deliverable; build and test wiring and this trace are supporting additions. See [native transport contract](../tests/provider/NATIVE-TRANSPORT.md).
 

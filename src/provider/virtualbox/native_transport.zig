@@ -259,10 +259,16 @@ pub const NativeTransport = struct {
         close(&stderr.writer);
         return collect(child.process, stdout.reader.?, stderr.reader.?, output, timeout) catch |err| {
             // Abort only the exact read-only child we launched, never a VM or VBoxSVC.
-            if (WaitForSingleObject(child.process, 0) != wait_object_0) {
-                if (TerminateProcess(child.process, 1) == 0 and WaitForSingleObject(child.process, 0) != wait_object_0)
-                    return error.RecoveryRequired;
-                if (WaitForSingleObject(child.process, 1000) != wait_object_0)
+            // Closing the readers first releases any child blocked writing to a full pipe.
+            close(&stdout.reader);
+            close(&stderr.reader);
+            const state = WaitForSingleObject(child.process, 50);
+            if (state != wait_object_0) {
+                if (state != wait_timeout) return error.RecoveryRequired;
+                // TerminateProcess may race a normal exit. Only a confirmed signalled
+                // process handle establishes completion, regardless of its return value.
+                _ = TerminateProcess(child.process, 1);
+                if (WaitForSingleObject(child.process, 2000) != wait_object_0)
                     return error.RecoveryRequired;
             }
             return err;
