@@ -2,7 +2,8 @@
 [CmdletBinding(SupportsShouldProcess = $true, ConfirmImpact = 'High')]
 param(
     [Parameter(Mandatory = $true)][Guid]$LabId,
-    [switch]$Exercise
+    [switch]$Exercise,
+    [switch]$IsolationConfirmed
 )
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -16,8 +17,8 @@ Add-Type -AssemblyName System.DirectoryServices.Protocols -ErrorAction Stop
 $ou = "OU=NanoAD-Reference,$($identity.BaseDn)"
 $targetDn = "CN=NanoAD-Target,$ou"
 $original = 'NanoAD reference original'
-$writer = Get-ADUser -Identity "CN=NanoAD-Writer,$ou" -Properties memberOf -Server $identity.Fqdn -ErrorAction Stop
-$reader = Get-ADUser -Identity "CN=NanoAD-Reader,$ou" -Properties memberOf,badPwdCount,LockedOut -Server $identity.Fqdn -ErrorAction Stop
+$writer = Get-ADUser -Identity "CN=NanoAD-Writer,$ou" -Properties memberOf,primaryGroupID -Server $identity.Fqdn -ErrorAction Stop
+$reader = Get-ADUser -Identity "CN=NanoAD-Reader,$ou" -Properties memberOf,primaryGroupID,badPwdCount,LockedOut -Server $identity.Fqdn -ErrorAction Stop
 $target = Get-ADUser -Identity $targetDn -Properties Description -Server $identity.Fqdn -ErrorAction Stop
 if (-not $writer.Enabled -or -not $reader.Enabled -or $target.Enabled -or
     $writer.SamAccountName -ne 'nanoad-writer' -or $reader.SamAccountName -ne 'nanoad-reader' -or
@@ -31,6 +32,7 @@ if ($reader.LockedOut) { throw 'Reader is locked out; do not attempt further aut
 
 [ordered]@{ schema_version = 1; lab_id = $identity.LabId; action = 'reference_authentication_acl'; writes_only = 'disabled fixture description'; negative_attempts_maximum = 1 } | ConvertTo-Json
 if (-not $Exercise) { return }
+if (-not $IsolationConfirmed) { throw 'Explicit provider isolation confirmation required.' }
 if (-not $PSCmdlet.ShouldProcess($targetDn,'Perform native authentication and ACL checks; restore fixture property')) { return }
 $null = Assert-NanoADGuest -Identity $identity -Phase Controller
 $writerUpn = "nanoad-writer@$($identity.DomainName)"
@@ -101,10 +103,15 @@ try {
 
     # One negative test only, never when approaching an effective lockout threshold.
     # Domain default is not sufficient if a fine-grained password policy applies.
-    $effective = Get-ADUserResultantPasswordPolicy -Identity $reader.DistinguishedName -Server $identity.Fqdn -ErrorAction Stop
-    $threshold = if ($null -ne $effective) { $effective.LockoutThreshold } else { $policy.LockoutThreshold }
-    $fresh = Get-ADUser -Identity $reader.DistinguishedName -Properties badPwdCount,LockedOut -Server $identity.Fqdn -ErrorAction Stop
-    if (-not $fresh.LockedOut -and $null -ne $fresh.badPwdCount -and ($threshold -eq 0 -or ($threshold - [int]$fresh.badPwdCount) -gt 1)) {
+    $threshold = $null
+    $fresh = Get-ADUser -Identity $reader.DistinguishedName -Properties badPwdCount,LockedOut,'msDS-ResultantPSO' -Server $identity.Fqdn -ErrorAction Stop
+    try {
+        if ($fresh.'msDS-ResultantPSO') {
+            $effective = Get-ADFineGrainedPasswordPolicy -Identity $fresh.'msDS-ResultantPSO' -Server $identity.Fqdn -ErrorAction Stop
+            if ($null -ne $effective) { $threshold = $effective.LockoutThreshold }
+        } else { $threshold = $policy.LockoutThreshold }
+    } catch { $threshold = $null }
+    if ($null -ne $threshold -and -not $fresh.LockedOut -and $null -ne $fresh.badPwdCount -and ($threshold -eq 0 -or ($threshold - [int]$fresh.badPwdCount) -gt 2)) {
         $wrong = ConvertTo-SecureString ([Guid]::NewGuid().ToString('N') + '!aA9') -AsPlainText -Force
         $badConn = $null
         try {

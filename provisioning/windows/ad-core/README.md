@@ -50,10 +50,10 @@ The separate fixture scripts are explicit, temporary reference experiments. Do n
 
 ```powershell
 X:\ad-core\New-NanoADReferenceFixture.ps1 -LabId $labId -Create -IsolationConfirmed -Confirm
-X:\ad-core\Test-NanoADReferenceFixture.ps1 -LabId $labId -Exercise -Confirm
+X:\ad-core\Test-NanoADReferenceFixture.ps1 -LabId $labId -Exercise -IsolationConfirmed -Confirm
 ```
 
-The exercise restores the known fixture description on exit, attempts only one deliberately incorrect authentication against the synthetic test user if the lockout policy allows it, and observes NTLM using explicit authentication rather than changing the policy. An NTLM refusal is an observation, not proof of a specific policy cause. Test event correlation separately from aggregate audit log counts. Re-run the core suite after a clean shutdown/restart and compare results with the same lab identity and a changed boot timestamp.
+The exercise restores the known fixture description on exit, makes at most one explicit incorrect-password bind against the synthetic test user when effective lockout headroom is known (native authentication internals may retry), and observes NTLM using explicit authentication rather than changing the policy. An NTLM refusal is an observation, not proof of a specific policy cause. Test event correlation separately from aggregate audit log counts. Re-run the core suite after a clean shutdown/restart and compare results with the same lab identity and a changed boot timestamp.
 
 ## Gate and rollback
 

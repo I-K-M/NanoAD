@@ -12,6 +12,7 @@ $identity = Get-NanoADIdentity -LabId $LabId
 $null = Assert-NanoADGuest -Identity $identity -Phase Controller
 $null = Assert-NanoADMarker -Identity $identity
 Import-Module ActiveDirectory -ErrorAction Stop
+Add-Type -AssemblyName System.DirectoryServices -ErrorAction Stop
 $ou = "OU=NanoAD-Reference,$($identity.BaseDn)"
 $existing = @(Get-ADOrganizationalUnit -Filter "Name -eq 'NanoAD-Reference'" -SearchBase $identity.BaseDn -SearchScope OneLevel -Server $identity.Fqdn -ErrorAction Stop)
 if ($existing.Count -ne 0) { throw 'Reference OU already exists. Do not recreate or overwrite; inspect or rebuild.' }
@@ -20,10 +21,12 @@ if (-not $Create) { return }
 if (-not $IsolationConfirmed) { throw 'Explicit provider isolation confirmation required.' }
 if (-not $PSCmdlet.ShouldProcess($ou,'Create three synthetic accounts and test-property ACL')) { return }
 
-$writerPassword = Read-Host 'Unique lab-only password for nanoad-writer' -AsSecureString
-$readerPassword = Read-Host 'Different unique lab-only password for nanoad-reader' -AsSecureString
-if ($writerPassword.Length -eq 0 -or $readerPassword.Length -eq 0) { throw 'Blank password refused.' }
+$writerPassword = $null
+$readerPassword = $null
 try {
+    $writerPassword = Read-Host 'Unique lab-only password for nanoad-writer' -AsSecureString
+    $readerPassword = Read-Host 'Different unique lab-only password for nanoad-reader' -AsSecureString
+    if ($writerPassword.Length -eq 0 -or $readerPassword.Length -eq 0) { throw 'Blank password refused.' }
     $null = Assert-NanoADGuest -Identity $identity -Phase Controller
     New-ADOrganizationalUnit -Name NanoAD-Reference -Path $identity.BaseDn -ProtectedFromAccidentalDeletion $true -Server $identity.Fqdn -ErrorAction Stop
     New-ADUser -Name NanoAD-Writer -SamAccountName nanoad-writer -UserPrincipalName "nanoad-writer@$($identity.DomainName)" -Path $ou -AccountPassword $writerPassword -Enabled $true -Server $identity.Fqdn -ErrorAction Stop
@@ -57,6 +60,6 @@ try {
     Write-Warning 'Fixture may be partial. No automatic cleanup; inspect or rebuild the disposable reference.'
     throw
 } finally {
-    $writerPassword.Dispose()
-    $readerPassword.Dispose()
+    if ($null -ne $writerPassword) { $writerPassword.Dispose() }
+    if ($null -ne $readerPassword) { $readerPassword.Dispose() }
 }
