@@ -6,7 +6,7 @@ NanoAD is an experimental, resource-aware Microsoft Active Directory lab orchest
 
 Rather than running an entire vulnerable infrastructure continuously, NanoAD is designed to provision only the machines, roles, directory objects and tools needed for the current exercise. Optional components remain absent or stopped until explicitly requested.
 
-> **Project status:** design and feasibility phase. No working release, validated Windows image or measured resource savings are available yet. Commands and figures below describe the intended product, not existing functionality.
+> **Project status:** experimental implementation and feasibility research. The Zig CLI supports `version`, `doctor`, `modules list` and `modules info <id>`; module discovery is metadata-only. No working lab release, validated Windows image or measured AD resource savings are available yet.
 
 ## Design principles
 
@@ -51,7 +51,7 @@ The first reference provider is VirtualBox on Windows x86-64. KVM/QEMU on Linux 
 
 ## Intended workflow
 
-The following illustrates the future CLI. It cannot be run yet.
+The following illustrates the intended end-to-end CLI. Only the read-only commands above are implemented; VM and module mutations are not available.
 
 ```sh
 nanoad doctor

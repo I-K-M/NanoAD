@@ -49,7 +49,7 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
           if ((zig version) -ne '0.14.1' -or $LASTEXITCODE -ne 0) { throw 'Unexpected Zig version' }
-          zig fmt --check build.zig src
+          zig fmt --check build.zig src modules
           if ($LASTEXITCODE -ne 0) { throw 'Format check failed' }
           zig build test
           if ($LASTEXITCODE -ne 0) { throw 'Unit tests failed' }
@@ -77,6 +77,15 @@ jobs:
             if ($code -ne $expected) { throw "Unexpected doctor exit: $code" }
             $report = $output | ConvertFrom-Json
             if ($report.schema_version -ne 1 -or $report.result -ne 'unqualified' -or $report.host.provider_runtime_verified -ne $false -or $report.host.isolation_verified -ne $false) { throw 'Unsafe doctor result' }
+            $catalogue = & $exe modules list --json | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or $catalogue.activation_performed -ne $false -or @($catalogue.modules | Where-Object enabled_by_default).Count -ne 1) { throw 'Module catalogue failed' }
+            if (@($catalogue.modules | Where-Object activation_supported).Count -ne 0) { throw 'Unexpected activation support' }
+            $fixture = & $exe modules info directory-fixtures --json | ConvertFrom-Json
+            if ($LASTEXITCODE -ne 0 -or $fixture.module.id -ne 'directory-fixtures' -or $fixture.module.lifecycle.can_stop -ne $false -or $null -ne $fixture.module.resources.peak_extra_memory_bytes) { throw 'Module info failed' }
+            & $exe modules info '../outside'
+            if ($LASTEXITCODE -ne 2) { throw 'Traversal-like ID accepted' }
+            & $exe modules info 'unknown-module'
+            if ($LASTEXITCODE -ne 2) { throw 'Unknown module accepted' }
             & $exe not-a-command
             if ($LASTEXITCODE -ne 2) { throw 'Invalid input must fail' }
             if (@(Get-ChildItem -Force).Count -ne 0) { throw 'Unexpected working-directory mutation' }

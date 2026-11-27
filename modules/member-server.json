@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "id": "member-server",
+  "version": "0.1.0",
+  "kind": "guest",
+  "enabled_by_default": false,
+  "requires": [
+    "ad-core"
+  ],
+  "conflicts": [],
+  "capabilities": [
+    "private_network",
+    "differencing_disk"
+  ],
+  "resources": {
+    "configured_memory_bytes": 1610612736,
+    "peak_extra_memory_bytes": null,
+    "steady_disk_bytes": null,
+    "peak_scratch_bytes": null,
+    "vcpus": 1,
+    "provenance": "unmeasured"
+  },
+  "lifecycle": {
+    "rollback_class": "rebuild",
+    "can_stop": true,
+    "can_archive": true,
+    "retain_by_default": true
+  },
+  "provisioner": "windows-member-v1",
+  "health_checks": [
+    "guest-ready",
+    "domain-membership"
+  ]
+}

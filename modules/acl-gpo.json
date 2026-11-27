@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "id": "acl-gpo",
+  "version": "0.1.0",
+  "kind": "fixture",
+  "enabled_by_default": false,
+  "requires": [
+    "ad-core"
+  ],
+  "conflicts": [],
+  "capabilities": [
+    "native_ad"
+  ],
+  "resources": {
+    "configured_memory_bytes": 0,
+    "peak_extra_memory_bytes": null,
+    "steady_disk_bytes": null,
+    "peak_scratch_bytes": null,
+    "vcpus": 0,
+    "provenance": "unmeasured"
+  },
+  "lifecycle": {
+    "rollback_class": "rebuild",
+    "can_stop": false,
+    "can_archive": false,
+    "retain_by_default": true
+  },
+  "provisioner": "acl-gpo-v1",
+  "health_checks": [
+    "native-ad",
+    "fixture-integrity"
+  ]
+}

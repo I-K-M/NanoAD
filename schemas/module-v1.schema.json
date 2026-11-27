@@ -1,0 +1,268 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "NanoAD module manifest v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "version",
+    "kind",
+    "enabled_by_default",
+    "requires",
+    "conflicts",
+    "capabilities",
+    "resources",
+    "lifecycle",
+    "provisioner",
+    "health_checks"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "maxLength": 32,
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "version": {
+      "type": "string",
+      "maxLength": 17,
+      "pattern": "^(0|[1-9][0-9]{0,4})\\.(0|[1-9][0-9]{0,4})\\.(0|[1-9][0-9]{0,4})$"
+    },
+    "kind": {
+      "enum": [
+        "fixture",
+        "role",
+        "guest",
+        "tool"
+      ]
+    },
+    "enabled_by_default": {
+      "type": "boolean"
+    },
+    "requires": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 32,
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    },
+    "conflicts": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "maxLength": 32,
+        "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "private_network",
+          "differencing_disk",
+          "native_ad",
+          "replication"
+        ]
+      }
+    },
+    "resources": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "configured_memory_bytes",
+        "peak_extra_memory_bytes",
+        "steady_disk_bytes",
+        "peak_scratch_bytes",
+        "vcpus",
+        "provenance"
+      ],
+      "properties": {
+        "configured_memory_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 17592186044416
+        },
+        "peak_extra_memory_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 17592186044416
+        },
+        "steady_disk_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 17592186044416
+        },
+        "peak_scratch_bytes": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 17592186044416
+        },
+        "vcpus": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 64
+        },
+        "provenance": {
+          "enum": [
+            "unmeasured",
+            "estimated"
+          ]
+        }
+      }
+    },
+    "lifecycle": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "rollback_class",
+        "can_stop",
+        "can_archive",
+        "retain_by_default"
+      ],
+      "properties": {
+        "rollback_class": {
+          "enum": [
+            "reversible",
+            "rebuild",
+            "irreversible"
+          ]
+        },
+        "can_stop": {
+          "type": "boolean"
+        },
+        "can_archive": {
+          "type": "boolean"
+        },
+        "retain_by_default": {
+          "const": true
+        }
+      }
+    },
+    "provisioner": {
+      "enum": [
+        "acl-gpo-v1",
+        "windows-core-v1",
+        "windows-adcs-v1",
+        "windows-reference-fixture-v1",
+        "kerberos-policy-v1",
+        "linux-tools-v1",
+        "windows-member-v1",
+        "windows-secondary-dc-v1"
+      ]
+    },
+    "health_checks": {
+      "type": "array",
+      "maxItems": 8,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "guest-ready",
+          "native-ad",
+          "dns",
+          "kerberos",
+          "fixture-integrity",
+          "domain-membership",
+          "certificate-service",
+          "replication"
+        ]
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "id": {
+            "const": "ad-core"
+          }
+        },
+        "required": [
+          "id"
+        ]
+      },
+      "then": {
+        "properties": {
+          "enabled_by_default": {
+            "const": true
+          },
+          "kind": {
+            "const": "guest"
+          },
+          "requires": {
+            "maxItems": 0
+          },
+          "conflicts": {
+            "maxItems": 0
+          },
+          "provisioner": {
+            "const": "windows-core-v1"
+          }
+        }
+      },
+      "else": {
+        "properties": {
+          "enabled_by_default": {
+            "const": false
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "kind": {
+            "const": "fixture"
+          }
+        },
+        "required": [
+          "kind"
+        ]
+      },
+      "then": {
+        "properties": {
+          "lifecycle": {
+            "properties": {
+              "can_stop": {
+                "const": false
+              },
+              "can_archive": {
+                "const": false
+              },
+              "rollback_class": {
+                "enum": [
+                  "rebuild",
+                  "irreversible"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  ]
+}

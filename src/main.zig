@@ -1,6 +1,9 @@
 const std = @import("std");
 const cli = @import("cli/command.zig");
 const host = @import("host/host.zig");
+const modules = @import("modules/registry.zig");
+const manifest = @import("modules/manifest.zig");
+const module_output = @import("modules/output.zig");
 
 const version = "0.1.0-dev";
 
@@ -39,6 +42,22 @@ fn run() !cli.Exit {
                 try out.writeByte('\n');
             } else try out.print("NanoAD {s}\n", .{version});
         },
+        .modules_list, .modules_info => {
+            const registry = modules.Registry.builtin() catch {
+                try std.io.getStdErr().writeAll("nanoad: bundled module catalogue invalid\n");
+                return .provider_failure;
+            };
+            if (command.kind == .modules_list) {
+                try module_output.list(out, &registry, command.json);
+            } else {
+                const id = manifest.Id.parse(command.module_id.?) catch return .invalid_input;
+                const selected = registry.find(id) orelse {
+                    try std.io.getStdErr().writeAll("nanoad: unknown module\n");
+                    return .invalid_input;
+                };
+                try module_output.info(out, selected, command.json);
+            }
+        },
         .doctor => {
             const report = host.collect();
             if (command.json) {
@@ -54,6 +73,8 @@ fn run() !cli.Exit {
 
 test {
     _ = cli;
+    _ = modules;
+    _ = manifest;
     _ = host;
     _ = @import("host/meminfo.zig");
     _ = @import("image/digest.zig");

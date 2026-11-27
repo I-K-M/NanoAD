@@ -1,6 +1,6 @@
 # N10 — module registry
 
-Status: pending
+Status: experimental implementation; CI and independent review pending
 
 Parent: [NAN-001](../../specs/001-nanoad.md), [NAN-002](../../specs/002-resource-research.md), [NAN-003](../../specs/003-module-lifecycle.md)
 
@@ -14,7 +14,7 @@ N09.
 
 ## Allowed boundary
 
-schemas/; modules/; src/modules/; tests/modules/. Changes outside this boundary require a reviewed ticket update.
+schemas/; modules/; src/modules/; tests/modules/. Supporting integration in build.zig, src/main.zig, src/cli/command.zig, .github/workflows/ci.yml, README.md and docs/DEVELOPMENT-TRACE.md is explicitly proposed in this ticket update to expose and verify the read-only list/info contract. Independent review remains required. No mutation commands.
 
 ## Acceptance criteria
 

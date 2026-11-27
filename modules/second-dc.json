@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "id": "second-dc",
+  "version": "0.1.0",
+  "kind": "guest",
+  "enabled_by_default": false,
+  "requires": [
+    "ad-core"
+  ],
+  "conflicts": [],
+  "capabilities": [
+    "private_network",
+    "differencing_disk",
+    "native_ad",
+    "replication"
+  ],
+  "resources": {
+    "configured_memory_bytes": 2147483648,
+    "peak_extra_memory_bytes": null,
+    "steady_disk_bytes": null,
+    "peak_scratch_bytes": null,
+    "vcpus": 1,
+    "provenance": "unmeasured"
+  },
+  "lifecycle": {
+    "rollback_class": "rebuild",
+    "can_stop": true,
+    "can_archive": true,
+    "retain_by_default": true
+  },
+  "provisioner": "windows-secondary-dc-v1",
+  "health_checks": [
+    "guest-ready",
+    "native-ad",
+    "replication"
+  ]
+}

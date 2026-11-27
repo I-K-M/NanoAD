@@ -47,6 +47,10 @@ Strict physical/commit envelopes, shared and per-workload peaks, disk growth and
 
 The first durable state slice uses a bounded, append-only, hash-chained JSON event journal and stable OS file lock. Replaying intent/dispatch/completion reconstructs NanoRAM reservations without a separate mutable ledger. Explicit cancellation is limited to undispatched work; ambiguous dispatch is never retried automatically. Read-only reconciliation reports drift and unavailable observations without adopting or deleting resources. See [recovery contract](../tests/recovery/README.md) and [proof pack](../tests/recovery/PROOF.md). Native VM execution, complete inventory/ownership attestation, storage power-loss durability and independent review remain outstanding.
 
+## N10 module registry
+
+The first bundled registry uses a closed JSON schema, an explicit build-time manifest allowlist, fixed-size parsing and graph structures, checked integer/null resource fields, canonical identifiers and deterministic dependency/conflict resolution. Only ad-core is selected by default. All activation paths are unavailable; read-only modules list/info report planned versus experimental-script implementations and do not inspect lab state. CI checks the registry and CLI working-directory invariance. See [module contract](../tests/modules/README.md) and [proof pack](../tests/modules/PROOF.md). N09 qualification and independent review remain gates; metadata introduces no VM, network or host changes.
+
 ## Qualification status
 
 N01–N04 remain open as research gates despite code integration. N05 hosted CI passed; real host and resource evidence remain pending. Do not label any Windows profile qualified. No production deployment or paid resources. Revert scoped commits if needed; do not automatically reset or delete a guest.
