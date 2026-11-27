@@ -61,4 +61,7 @@ test {
     _ = @import("storage/accounting.zig");
     _ = @import("storage/planner.zig");
     _ = @import("storage/windows_allocation.zig");
+    _ = @import("governor/bounds.zig");
+    _ = @import("governor/admission.zig");
+    _ = @import("host/metrics/windows.zig");
 }
