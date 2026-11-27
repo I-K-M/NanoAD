@@ -28,7 +28,11 @@ $root = Get-ADRootDSE -Server $identity.Fqdn -ErrorAction Stop
 $attribute = @(Get-ADObject -LDAPFilter '(lDAPDisplayName=description)' -SearchBase $root.SchemaNamingContext -SearchScope OneLevel -Properties schemaIDGUID -Server $identity.Fqdn -ErrorAction Stop)
 if ($attribute.Count -ne 1) { throw 'Expected unique description schema attribute.' }
 $propertyGuid = [Guid]::new([byte[]]$attribute[0].schemaIDGUID)
-$acl = Get-Acl -LiteralPath "AD:\$($target.DistinguishedName)" -ErrorAction Stop
+# Bind the security-descriptor read to the explicit lab DC; do not rely on
+# the AD provider drive's implicit current server.
+$securedObject = Get-ADObject -Identity $target.DistinguishedName -Properties nTSecurityDescriptor -Server $identity.Fqdn -ErrorAction Stop
+$acl = $securedObject.nTSecurityDescriptor
+if ($null -eq $acl -or $securedObject.ObjectGUID -ne $target.ObjectGUID) { throw 'Missing or mismatched fixture security descriptor.' }
 $rules = @($acl.GetAccessRules($true,$false,[Security.Principal.SecurityIdentifier]))
 $writerRules = @($rules | Where-Object {
     $_.IdentityReference -eq $writer.SID -and $_.ObjectType -eq $propertyGuid -and

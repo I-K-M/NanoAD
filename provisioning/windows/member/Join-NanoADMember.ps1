@@ -40,8 +40,8 @@ try {
     Assert-NanoADMemberDns -Identity $identity
     # Explicit signed/sealed Kerberos before join. No NTLM/simple-bind
     # fallback. On an unsupported standalone-client setup, refuse join.
-    $null = Get-NanoADMemberDirectory -Identity $identity -Credential $credential -Expected Absent
-    New-NanoADMemberMarker -Identity $identity
+    $directory = Get-NanoADMemberDirectory -Identity $identity -Credential $credential -Expected Absent
+    New-NanoADMemberMarker -Identity $identity -DomainGuid ([Guid]$directory.DomainGuid)
     # Native hardening remains enabled. No remote target, unsecure join,
     # account-reuse override, domain migration or forced reboot.
     $joined = Add-Computer -DomainName $identity.DomainName -Server $identity.DcFqdn -Credential $credential -PassThru -ErrorAction Stop

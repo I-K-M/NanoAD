@@ -96,7 +96,8 @@ function Get-NanoADMemberMarkerPath {
 }
 
 function New-NanoADMemberMarker {
-    param([Parameter(Mandatory = $true)]$Identity)
+    param([Parameter(Mandatory = $true)]$Identity,[Parameter(Mandatory = $true)][Guid]$DomainGuid)
+    if ($DomainGuid -eq [Guid]::Empty) { throw 'Missing verified domain identity.' }
     $path = Get-NanoADMemberMarkerPath
     $root = Split-Path -Parent $path
     if (-not (Test-Path -LiteralPath $root)) { New-Item -ItemType Directory -Path $root -ErrorAction Stop | Out-Null }
@@ -107,6 +108,7 @@ function New-NanoADMemberMarker {
         guest_id = $Identity.GuestId
         computer_name = $Identity.ComputerName
         domain_name = $Identity.DomainName
+        domain_guid = $DomainGuid.ToString('D')
         phase = 'join_requested'
         requested_unix_ms = [DateTimeOffset]::UtcNow.ToUnixTimeMilliseconds()
     } | ConvertTo-Json -Compress
@@ -125,10 +127,21 @@ function Assert-NanoADMemberMarker {
     $path = Get-NanoADMemberMarkerPath
     if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw 'Missing member join intent; no adoption of existing computers.' }
     $marker = Get-Content -LiteralPath $path -Raw -ErrorAction Stop | ConvertFrom-Json -ErrorAction Stop
-    if ($marker.schema_version -ne 1 -or $marker.phase -ne 'join_requested' -or
-        $marker.lab_id -cne $Identity.LabId -or $marker.guest_id -cne $Identity.GuestId -or
-        $marker.computer_name -cne $Identity.ComputerName -or $marker.domain_name -cne $Identity.DomainName) {
-        throw 'Member marker does not match the requested lab/guest identity.'
+    Assert-NanoADMemberMarkerRecord -Identity $Identity -Marker $marker
+    return $marker
+}
+
+function Assert-NanoADMemberMarkerRecord {
+    param([Parameter(Mandatory = $true)]$Identity,[Parameter(Mandatory = $true)]$Marker)
+    $domainGuid = [Guid]::Empty
+    if ($Marker.schema_version -ne 1 -or $Marker.phase -cne 'join_requested' -or
+        $Marker.lab_id -cne $Identity.LabId -or $Marker.guest_id -cne $Identity.GuestId -or
+        $Marker.computer_name -cne $Identity.ComputerName -or $Marker.domain_name -cne $Identity.DomainName -or
+        $Marker.domain_guid -isnot [string] -or -not [Guid]::TryParseExact($Marker.domain_guid,'D',[ref]$domainGuid) -or
+        $domainGuid -eq [Guid]::Empty -or $Marker.domain_guid -cne $domainGuid.ToString('D') -or
+        ($Marker.requested_unix_ms -isnot [long] -and $Marker.requested_unix_ms -isnot [int]) -or
+        $Marker.requested_unix_ms -le 0) {
+        throw 'Member marker does not match the requested lab/guest/domain identity.'
     }
 }
 

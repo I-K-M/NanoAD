@@ -10,7 +10,7 @@ $ErrorActionPreference = 'Stop'
 . (Join-Path $PSScriptRoot 'Common.ps1')
 $identity = Get-NanoADMemberIdentity -LabId $LabId -GuestId $GuestId
 $null = Assert-NanoADMemberGuest -Identity $identity -Phase Member
-Assert-NanoADMemberMarker -Identity $identity
+$marker = Assert-NanoADMemberMarker -Identity $identity
 if (-not $IsolationConfirmed) { throw 'Verify the exact isolated provider network before guest queries.' }
 $results = [Collections.Generic.List[object]]::new()
 $directory = $null
@@ -35,6 +35,7 @@ if ($results[0].status -eq 'pass') {
     }
     try {
         $directory = Get-NanoADMemberDirectory -Identity $identity -Expected Present
+        if ($directory.DomainGuid -cne $marker.domain_guid) { throw 'Joined directory differs from the prejoin domain object.' }
         $results.Add([pscustomobject]@{ id = 'kerberos_ldap_identity'; status = 'pass' })
     } catch {
         $results.Add([pscustomobject]@{ id = 'kerberos_ldap_identity'; status = 'fail'; error_type = $_.Exception.GetType().Name })

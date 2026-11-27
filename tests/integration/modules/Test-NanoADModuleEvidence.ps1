@@ -18,6 +18,24 @@ function Assert-Rejected {
 Assert-Rejected { Get-NanoADMemberIdentity -LabId $lab -GuestId $lab }
 Assert-Rejected { Get-NanoADMemberIdentity -LabId $lab -GuestId ([Guid]::Empty) }
 Assert-Rejected { Get-NanoADMemberIdentity -LabId ([Guid]::Empty) -GuestId $guest }
+
+$marker = [pscustomobject]@{
+    schema_version = 1
+    phase = 'join_requested'
+    lab_id = $id.LabId
+    guest_id = $id.GuestId
+    computer_name = $id.ComputerName
+    domain_name = $id.DomainName
+    domain_guid = '21234567-89ab-cdef-0123-456789abcdef'
+    requested_unix_ms = [long]1000
+}
+Assert-NanoADMemberMarkerRecord -Identity $id -Marker $marker
+$marker.domain_guid = [Guid]::Empty.ToString('D')
+Assert-Rejected { Assert-NanoADMemberMarkerRecord -Identity $id -Marker $marker }
+$marker.domain_guid = '21234567-89ab-cdef-0123-456789abcdef'
+$marker.guest_id = $id.LabId
+Assert-Rejected { Assert-NanoADMemberMarkerRecord -Identity $id -Marker $marker }
+
 function New-Report {
     param([string]$Module,[long]$Boot,[long]$Captured)
     $report = [ordered]@{
